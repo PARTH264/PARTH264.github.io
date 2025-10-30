@@ -4689,39 +4689,6 @@ input, select, textarea {
 
 
 
-/* ===== Parth: Force a compact, centered "My Projects" section title ===== */
-
-/* Make the header container centered */
-#projects > header.major {
-  text-align: center !important;
-  margin-bottom: 2rem !important;
-  display: block !important;
-}
-
-/* Make the H2 only as wide as its text, add underline accent */
-#projects > header.major > h2 {
-  display: inline-block !important;
-  margin: 0 auto !important;
-  padding: 0.25rem 0.6rem !important;
-  font-size: 2rem !important;        /* adjust size if too large */
-  line-height: 1.15 !important;
-  color: #ffffff !important;         /* change if needed */
-  background: transparent !important;
-  width: auto !important;
-  max-width: none !important;
-  border-bottom: 3px solid #00bcd4 !important; /* optional accent */
-  padding-bottom: 0.4rem !important;
-  box-sizing: content-box !important;
-}
-
-/* If the template forces width or display on header.major h2 a, override that too */
-#projects > header.major > h2 a {
-  display: inline !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  color: inherit !important;
-  text-decoration: none !important;
-}
 
 
 
