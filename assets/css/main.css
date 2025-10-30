@@ -4689,7 +4689,7 @@ input, select, textarea {
 
 
 
-		#projects .major h2 {
+#projects .major h2 {
   display: inline-block;
   margin: 0 auto;
   font-size: 2em; /* smaller title */
@@ -4704,4 +4704,3 @@ input, select, textarea {
 }
 
 
-	}
