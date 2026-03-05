@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Overview Dashboard | Parth Bhalani</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #040d07;
+    --bg2:     #071209;
+    --bg3:     #09160b;
+    --accent:  #34d399;
+    --a2:      #10b981;
+    --a3:      #6ee7b7;
+    --border:  rgba(52,211,153,.1);
+    --bord2:   rgba(52,211,153,.22);
+    --text:    #e4f5ec;
+    --muted:   #3d6b4f;
+    --muted2:  #2a4f38;
+    --surf:    rgba(52,211,153,.04);
+    /* region colors matching dashboard */
+    --west:    #a855f7;
+    --east:    #3b82f6;
+    --central: #d97706;
+    --south:   #22c55e;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none;}
+
+  #cur {width:8px;height:8px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+  #cur2{width:30px;height:30px;border:1.5px solid rgba(52,211,153,.35);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(52,211,153,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,.022) 1px,transparent 1px);
+    background-size:60px 60px;}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:100;padding:1rem 5rem;display:flex;justify-content:space-between;align-items:center;background:rgba(4,13,7,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);}
+  .nav-back{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--muted);font-size:.85rem;font-weight:500;transition:color .2s;}
+  .nav-back:hover{color:var(--accent);}
+  .nav-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);}
+  .nav-tag{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--border);border-radius:100px;color:var(--muted);}
+
+  /* HERO */
+  .hero{min-height:64vh;display:flex;align-items:center;padding:9rem 5rem 4rem;position:relative;overflow:hidden;}
+  .orb{position:absolute;border-radius:50%;pointer-events:none;}
+  .orb1{width:700px;height:700px;top:-180px;right:-150px;background:radial-gradient(circle,rgba(168,85,247,.07),transparent 65%);animation:drift 10s ease-in-out infinite;}
+  .orb2{width:450px;height:450px;bottom:-80px;left:-80px;background:radial-gradient(circle,rgba(52,211,153,.05),transparent 70%);animation:drift 14s ease-in-out infinite reverse;}
+  .orb3{width:350px;height:350px;top:40%;right:25%;background:radial-gradient(circle,rgba(59,130,246,.04),transparent 70%);animation:drift 18s ease-in-out infinite;}
+  @keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(25px,-15px)}66%{transform:translate(-15px,12px)}}
+
+  .hero-content{position:relative;z-index:2;max-width:840px;}
+  .breadcrumb{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);margin-bottom:1.4rem;animation:fadeUp .6s ease both;}
+  .breadcrumb a{color:var(--accent);text-decoration:none;}
+  .badge-row{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1.3rem;animation:fadeUp .6s .07s ease both;}
+  .pb{font-size:.72rem;font-weight:600;letter-spacing:.06em;padding:.28rem .75rem;border-radius:100px;color:var(--accent);background:rgba(52,211,153,.07);border:1px solid var(--border);}
+  .pb-sales{color:#fbbf24;background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2);}
+
+  .proj-title{font-family:'Outfit',sans-serif;font-size:clamp(2.2rem,5vw,4.3rem);font-weight:800;letter-spacing:-.04em;line-height:.95;animation:fadeUp .6s .13s ease both;}
+  .proj-title em{color:#fbbf24;font-style:normal;}
+  .proj-sub{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.2rem;color:var(--muted);margin-top:.7rem;animation:fadeUp .6s .2s ease both;}
+
+  .hero-meta{display:flex;flex-wrap:wrap;gap:2rem;margin-top:2rem;padding:1.4rem 1.8rem;background:var(--surf);border:1px solid var(--border);border-radius:14px;animation:fadeUp .6s .26s ease both;width:fit-content;}
+  .m-lbl{font-size:.67rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);margin-bottom:.25rem;}
+  .m-val{font-size:.9rem;font-weight:600;color:var(--text);}
+  .m-val.gold{color:#fbbf24;}
+  .m-val.green{color:var(--accent);}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* LAYOUT */
+  .sec{position:relative;z-index:2;}
+  .inner{max-width:1200px;margin:0 auto;padding:5rem;}
+  .sec-div{position:relative;z-index:2;height:1px;background:linear-gradient(90deg,transparent,var(--bord2),transparent);}
+  .sec-label{display:inline-flex;align-items:center;gap:.7rem;font-size:.7rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:.7rem;}
+  .sec-label::before{content:'';width:26px;height:1px;background:var(--accent);}
+  .sec-title{font-family:'Outfit',sans-serif;font-size:clamp(1.7rem,3vw,2.3rem);font-weight:800;letter-spacing:-.03em;margin-bottom:2.5rem;}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal.on{opacity:1;transform:translateY(0);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:border-color .3s;}
+  .card:hover{border-color:var(--bord2);}
+  .card-title{font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:700;color:#fbbf24;margin-bottom:1.2rem;padding-bottom:.65rem;border-bottom:1px solid var(--border);}
+
+  /* TOTAL KPI ROW */
+  .kpi5{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;}
+  .kpi-c{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.3rem;
+    position:relative;overflow:hidden;transition:all .3s;}
+  .kpi-c:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .kpi-c::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;opacity:0;transition:opacity .3s;}
+  .kpi-c:hover::after{opacity:1;}
+  .kc-gold::after{background:linear-gradient(90deg,#d97706,#fbbf24);}
+  .kc-green::after{background:linear-gradient(90deg,var(--a2),var(--accent));}
+  .kc-blue::after{background:linear-gradient(90deg,#2563eb,#60a5fa);}
+  .kc-up::after{background:linear-gradient(90deg,#16a34a,#4ade80);}
+  .kc-purple::after{background:linear-gradient(90deg,#7c3aed,#a855f7);}
+  .kpi-ico{font-size:1.3rem;margin-bottom:.5rem;}
+  .kpi-lbl{font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.35rem;}
+  .kpi-num{font-family:'Outfit',sans-serif;font-size:1.85rem;font-weight:800;line-height:1;}
+  .kpi-yoy{font-size:.72rem;margin-top:.3rem;font-weight:600;}
+  .up{color:#4ade80;}
+  .down{color:#f87171;}
+  .flat{color:var(--muted);}
+
+  /* REGION CARDS */
+  .region-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+  .reg-card{border-radius:16px;padding:1.6rem;position:relative;overflow:hidden;transition:all .3s;border:1px solid transparent;}
+  .reg-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.1);}
+  .reg-west   {background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(168,85,247,.05));}
+  .reg-east   {background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.05));}
+  .reg-central{background:linear-gradient(135deg,rgba(217,119,6,.15),rgba(217,119,6,.05));}
+  .reg-south  {background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(34,197,94,.05));}
+  .reg-name{font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6rem;}
+  .reg-sales{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;line-height:1;margin-bottom:.25rem;}
+  .reg-py{font-size:.72rem;color:var(--muted);margin-bottom:.8rem;}
+  .reg-yoy{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;font-weight:700;padding:.25rem .65rem;border-radius:100px;}
+  .yoy-up{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.2);}
+  .yoy-flat{background:rgba(156,163,175,.1);color:#9ca3af;border:1px solid rgba(156,163,175,.15);}
+  /* mini sparkline in region card */
+  .reg-spark{margin-top:1rem;height:40px;}
+  .reg-spark svg{width:100%;height:100%;}
+
+  /* CY/PY TABLE */
+  .cypy-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+  .cypy-table th{padding:.6rem .8rem;text-align:left;color:var(--muted);font-weight:600;
+    font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  .cypy-table th:not(:first-child){text-align:right;}
+  .cypy-table td{padding:.65rem .8rem;border-bottom:1px solid rgba(52,211,153,.05);}
+  .cypy-table td:not(:first-child){text-align:right;}
+  .cypy-table tr:hover td{background:rgba(52,211,153,.03);}
+  .cypy-table tr:last-child td{border-top:1px solid var(--bord2);font-weight:700;color:var(--text);}
+  .td-region{font-weight:700;}
+  .td-west{color:var(--west);}
+  .td-east{color:var(--east);}
+  .td-central{color:var(--central);}
+  .td-south{color:var(--south);}
+  .td-cy{color:#fbbf24;font-weight:600;}
+  .td-py{color:var(--muted);}
+  .td-yoy-up{color:#4ade80;font-weight:700;}
+  .td-yoy-dn{color:#f87171;font-weight:700;}
+  .td-profit{color:var(--a3);font-weight:600;}
+  .td-qty{color:#c084fc;font-weight:600;}
+  .pill{display:inline-flex;align-items:center;gap:.2rem;padding:.15rem .5rem;border-radius:100px;font-size:.7rem;font-weight:700;}
+  .pill-up{background:rgba(74,222,128,.1);color:#4ade80;}
+  .pill-dn{background:rgba(248,113,113,.1);color:#f87171;}
+  .pill-flat{background:rgba(156,163,175,.1);color:#9ca3af;}
+
+  /* STATE BAR CHART */
+  .bc-list{display:flex;flex-direction:column;gap:.6rem;}
+  .bc-row{display:flex;align-items:center;gap:.75rem;}
+  .bc-lbl{font-size:.76rem;color:var(--muted);text-align:right;flex-shrink:0;width:90px;}
+  .bc-track{flex:1;height:20px;background:rgba(52,211,153,.05);border-radius:4px;overflow:hidden;}
+  .bc-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:.4rem;
+    font-size:.68rem;font-weight:700;color:#fff;transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+
+  /* MONTHLY TREND CHART */
+  .monthly-chart{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+  .month-region{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.2rem;transition:border-color .3s;}
+  .month-region:hover{border-color:var(--bord2);}
+  .mr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+  .mr-name{font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;}
+  .mr-total{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;}
+  .mr-bars{display:flex;align-items:flex-end;gap:3px;height:70px;}
+  .mb{border-radius:2px 2px 0 0;flex:1;min-height:3px;transition:height 1s cubic-bezier(.4,0,.2,1);}
+  .mr-months{display:flex;justify-content:space-between;margin-top:.3rem;}
+  .mr-m{font-size:.55rem;color:var(--muted2);}
+
+  /* YOY GAUGE */
+  .yoy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+  .yoy-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;text-align:center;transition:all .3s;}
+  .yoy-card:hover{border-color:var(--bord2);transform:translateY(-3px);}
+  .yoy-region{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem;}
+  .yoy-big{font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:.3rem;}
+  .yoy-label{font-size:.7rem;color:var(--muted);}
+  .yoy-bar-wrap{height:6px;background:rgba(52,211,153,.08);border-radius:100px;margin-top:.8rem;overflow:hidden;}
+  .yoy-bar-fill{height:100%;border-radius:100px;transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+
+  /* INSIGHTS */
+  .ins-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;}
+  .ins-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;transition:all .3s;}
+  .ins-card:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .ins-ico{font-size:1.5rem;margin-bottom:.7rem;}
+  .ins-title{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;color:#fbbf24;margin-bottom:.4rem;}
+  .ins-text{font-size:.8rem;line-height:1.75;color:var(--muted);}
+  .hi{color:var(--a3);font-weight:600;}
+  .hi-gold{color:#fbbf24;font-weight:600;}
+  .hi-red{color:#f87171;font-weight:600;}
+  .hi-purple{color:#c084fc;font-weight:600;}
+
+  /* TOOLS */
+  .tools-row{display:flex;flex-wrap:wrap;gap:.65rem;}
+  .tc{display:flex;align-items:center;gap:.45rem;padding:.45rem 1rem;border-radius:100px;
+    background:var(--surf);border:1px solid var(--border);font-size:.8rem;font-weight:500;color:var(--text);transition:all .2s;}
+  .tc:hover{border-color:var(--bord2);background:rgba(52,211,153,.08);}
+
+  /* STEPS */
+  .steps{display:flex;flex-direction:column;gap:.85rem;}
+  .step{display:flex;gap:.9rem;align-items:flex-start;}
+  .step-num{width:26px;height:26px;border-radius:50%;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);
+    display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fbbf24;flex-shrink:0;margin-top:.1rem;}
+  .step-title{font-size:.86rem;font-weight:600;color:var(--text);margin-bottom:.2rem;}
+  .step-desc{font-size:.78rem;color:var(--muted);line-height:1.6;}
+
+  /* DASHBOARD FRAME */
+  .dash-frame{border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 20px 70px rgba(0,0,0,.6);transition:border-color .3s;}
+  .dash-frame:hover{border-color:var(--bord2);}
+  .dash-bar{background:var(--bg3);padding:.65rem 1rem;display:flex;align-items:center;gap:.45rem;border-bottom:1px solid var(--border);}
+  .db-dot{width:10px;height:10px;border-radius:50%;}
+  .db-lbl{font-size:.68rem;color:var(--muted);margin-left:auto;letter-spacing:.08em;text-transform:uppercase;}
+  .dash-frame img{width:100%;display:block;filter:brightness(.93);}
+
+  /* NEXT */
+  .next-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+  .next-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.2rem;
+    text-decoration:none;color:var(--text);transition:all .3s;display:flex;flex-direction:column;gap:.5rem;}
+  .next-card:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .nc-ico{font-size:1.6rem;}
+  .nc-title{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;}
+  .nc-sub{font-size:.74rem;color:var(--muted);}
+  .nc-arr{font-size:.8rem;color:var(--accent);margin-top:auto;}
+
+  footer{position:relative;z-index:2;border-top:1px solid var(--border);padding:1.6rem 5rem;
+    display:flex;justify-content:space-between;align-items:center;background:var(--bg);}
+  .f-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:.95rem;color:var(--accent);}
+  .f-copy{font-size:.78rem;color:var(--muted2);}
+  .f-back{font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s;}
+  .f-back:hover{color:var(--accent);}
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem;}
+    .hero,.inner{padding-left:1.5rem;padding-right:1.5rem;}
+    .kpi5,.region-grid,.monthly-chart,.yoy-grid,.ins-grid,.next-grid{grid-template-columns:1fr 1fr;}
+    .two-col{grid-template-columns:1fr;}
+    footer{flex-direction:column;gap:.8rem;padding:1.2rem;text-align:center;}
+  }
+</style>
+</head>
+<body>
+<div id="cur"></div><div id="cur2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-back">← Back to Portfolio</a>
+  <div class="nav-logo">Parth Bhalani</div>
+  <div class="nav-tag">Case Study</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero sec">
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+  <div class="hero-content">
+    <div class="breadcrumb reveal">
+      <a href="index.html">Portfolio</a> <span>/</span> <span>Sales Overview Dashboard</span>
+    </div>
+    <div class="badge-row reveal">
+      <span class="pb pb-sales">📈 Retail / Sales</span>
+      <span class="pb">Power BI</span><span class="pb">DAX</span>
+      <span class="pb">SQL</span><span class="pb">YoY Analysis</span>
+      <span class="pb">Regional Analytics</span><span class="pb">KPI Tracking</span>
+    </div>
+    <h1 class="proj-title">Sales Overview<br><em>Dashboard</em></h1>
+    <p class="proj-sub">Year-over-year regional performance tracking across West, East, Central & South — Jan to Dec 2024</p>
+    <div class="hero-meta reveal">
+      <div><div class="m-lbl">Total CY Sales</div><div class="m-val gold">$733.9K</div></div>
+      <div><div class="m-lbl">Total PY Sales</div><div class="m-val">$609.9K</div></div>
+      <div><div class="m-lbl">YoY Sales Growth</div><div class="m-val green">▲ 20%</div></div>
+      <div><div class="m-lbl">Total CY Profit</div><div class="m-val gold">$93.6K</div></div>
+      <div><div class="m-lbl">YoY Profit Growth</div><div class="m-val green">▲ 14%</div></div>
+      <div><div class="m-lbl">Total CY Qty</div><div class="m-val">12,515</div></div>
+      <div><div class="m-lbl">YoY Qty Growth</div><div class="m-val green">▲ 27%</div></div>
+      <div><div class="m-lbl">Date Range</div><div class="m-val">2024 Full Year</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="sec">
+  <div class="inner" style="padding-top:3rem;padding-bottom:3rem;">
+    <div class="sec-label reveal">Dashboard Preview</div>
+    <h2 class="sec-title reveal">Power BI Dashboard — By Region</h2>
+    <div class="dash-frame reveal">
+      <div class="dash-bar">
+        <div class="db-dot" style="background:#ff5f57"></div>
+        <div class="db-dot" style="background:#febc2e"></div>
+        <div class="db-dot" style="background:#28c840"></div>
+        <span class="db-lbl">Sales Overview Dashboard · Power BI · 01-01-2024 to 30-12-2024</span>
+      </div>
+      <img src="Assets/Sales Dashboard.png" alt="Sales Overview Dashboard">
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- TOTAL KPIs -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Portfolio Totals</div>
+    <h2 class="sec-title reveal">2024 Full-Year KPI Summary</h2>
+    <div class="kpi5 reveal">
+      <div class="kpi-c kc-gold">
+        <div class="kpi-ico">💰</div>
+        <div class="kpi-lbl">CY Total Sales</div>
+        <div class="kpi-num" style="color:#fbbf24;">$733.9K</div>
+        <div class="kpi-yoy up">▲ 20% vs PY $609.9K</div>
+      </div>
+      <div class="kpi-c kc-green">
+        <div class="kpi-ico">📊</div>
+        <div class="kpi-lbl">CY Total Profit</div>
+        <div class="kpi-num" style="color:var(--accent);">$93.6K</div>
+        <div class="kpi-yoy up">▲ 14% vs PY $81.9K</div>
+      </div>
+      <div class="kpi-c kc-blue">
+        <div class="kpi-ico">📦</div>
+        <div class="kpi-lbl">CY Total Quantity</div>
+        <div class="kpi-num" style="color:#60a5fa;">12,515</div>
+        <div class="kpi-yoy up">▲ 27% vs PY 9,870</div>
+      </div>
+      <div class="kpi-c kc-up">
+        <div class="kpi-ico">📅</div>
+        <div class="kpi-lbl">PY Total Sales</div>
+        <div class="kpi-num" style="color:#4ade80;">$609.9K</div>
+        <div class="kpi-yoy flat">Baseline year</div>
+      </div>
+      <div class="kpi-c kc-purple">
+        <div class="kpi-ico">🗺️</div>
+        <div class="kpi-lbl">Regions Tracked</div>
+        <div class="kpi-num" style="color:#c084fc;">4</div>
+        <div class="kpi-yoy flat">West · East · Central · South</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- REGION CARDS -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Regional Breakdown</div>
+    <h2 class="sec-title reveal">Sales Performance by Region</h2>
+    <div class="region-grid reveal">
+
+      <!-- WEST -->
+      <div class="reg-card reg-west">
+        <div class="reg-name" style="color:var(--west);">🟣 West</div>
+        <div class="reg-sales" style="color:var(--west);">$250.13K</div>
+        <div class="reg-py">PY Sales: $187.48K</div>
+        <span class="reg-yoy yoy-up">▲ 33% YoY</span>
+        <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Profit</span><span style="color:var(--a3);font-weight:600;">$43.8K <small style="color:#4ade80;">▲82%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Qty</span><span style="color:#c084fc;font-weight:600;">4,270 <small style="color:#4ade80;">▲41%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">PY Profit</span><span style="color:var(--muted);">$24.1K</span>
+          </div>
+        </div>
+        <div class="reg-spark">
+          <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+            <path d="M0,35 L10,32 L20,28 L30,25 L40,30 L50,22 L60,18 L70,20 L80,14 L90,10 L100,8 L110,5 L120,3" fill="none" stroke="rgba(168,85,247,.6)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- EAST -->
+      <div class="reg-card reg-east">
+        <div class="reg-name" style="color:var(--east);">🔵 East</div>
+        <div class="reg-sales" style="color:var(--east);">$213.82K</div>
+        <div class="reg-py">PY Sales: $181.34K</div>
+        <span class="reg-yoy yoy-up">▲ 18% YoY</span>
+        <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Profit</span><span style="color:var(--a3);font-weight:600;">$33.4K <small style="color:#4ade80;">▲65%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Qty</span><span style="color:#c084fc;font-weight:600;">3,450 <small style="color:#4ade80;">▲20%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">PY Profit</span><span style="color:var(--muted);">$20.3K</span>
+          </div>
+        </div>
+        <div class="reg-spark">
+          <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+            <path d="M0,32 L10,30 L20,26 L30,28 L40,24 L50,20 L60,22 L70,18 L80,16 L90,12 L100,15 L110,22 L120,8" fill="none" stroke="rgba(59,130,246,.6)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- CENTRAL -->
+      <div class="reg-card reg-central">
+        <div class="reg-name" style="color:var(--central);">🟡 Central</div>
+        <div class="reg-sales" style="color:var(--central);">$147.1K</div>
+        <div class="reg-py">PY Sales: $147.43K</div>
+        <span class="reg-yoy yoy-flat">▼ 0% YoY</span>
+        <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Profit</span><span style="color:#f87171;font-weight:600;">$7.6K <small style="color:#f87171;">▼62%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Qty</span><span style="color:#c084fc;font-weight:600;">2,880 <small style="color:#4ade80;">▲22%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">PY Profit</span><span style="color:var(--muted);">$19.9K</span>
+          </div>
+        </div>
+        <div class="reg-spark">
+          <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+            <path d="M0,20 L10,18 L20,22 L30,19 L40,21 L50,20 L60,22 L70,18 L80,20 L90,21 L100,19 L110,20 L120,18" fill="none" stroke="rgba(217,119,6,.6)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- SOUTH -->
+      <div class="reg-card reg-south">
+        <div class="reg-name" style="color:var(--south);">🟢 South</div>
+        <div class="reg-sales" style="color:var(--south);">$122.91K</div>
+        <div class="reg-py">PY Sales: $93.61K</div>
+        <span class="reg-yoy yoy-up">▲ 31% YoY</span>
+        <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Profit</span><span style="color:#f87171;font-weight:600;">$8.8K <small style="color:#f87171;">▼50%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">CY Qty</span><span style="color:#c084fc;font-weight:600;">1,915 <small style="color:#4ade80;">▲19%</small></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+            <span style="color:var(--muted);">PY Profit</span><span style="color:var(--muted);">$17.7K</span>
+          </div>
+        </div>
+        <div class="reg-spark">
+          <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+            <path d="M0,30 L10,28 L20,25 L30,27 L40,22 L50,25 L60,18 L70,22 L80,15 L90,18 L100,12 L110,5 L120,8" fill="none" stroke="rgba(34,197,94,.6)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- CY/PY METRICS TABLE + STATE BARS -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Full Metrics Table</div>
+    <h2 class="sec-title reveal">CY vs PY Performance — All Regions</h2>
+    <div class="two-col">
+
+      <!-- Full CY/PY table -->
+      <div class="card reveal" style="grid-column:1/-1;">
+        <div class="card-title">📋 Current Year vs Previous Year — Sales · Profit · Quantity</div>
+        <div style="overflow-x:auto;">
+          <table class="cypy-table">
+            <thead>
+              <tr>
+                <th>Region</th>
+                <th>CY Sales</th><th>PY Sales</th><th>YoY Sales</th>
+                <th>CY Profit</th><th>PY Profit</th><th>YoY Profit</th>
+                <th>CY Qty</th><th>PY Qty</th><th>YoY Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-region td-west">🟣 West</td>
+                <td class="td-cy">$250.1K</td><td class="td-py">$187.5K</td><td><span class="pill pill-up">▲ 33%</span></td>
+                <td class="td-profit">$43.8K</td><td class="td-py">$24.1K</td><td><span class="pill pill-up">▲ 82%</span></td>
+                <td class="td-qty">4,270</td><td class="td-py">3,025</td><td><span class="pill pill-up">▲ 41%</span></td>
+              </tr>
+              <tr>
+                <td class="td-region td-east">🔵 East</td>
+                <td class="td-cy">$213.8K</td><td class="td-py">$181.3K</td><td><span class="pill pill-up">▲ 18%</span></td>
+                <td class="td-profit">$33.4K</td><td class="td-py">$20.3K</td><td><span class="pill pill-up">▲ 65%</span></td>
+                <td class="td-qty">3,450</td><td class="td-py">2,872</td><td><span class="pill pill-up">▲ 20%</span></td>
+              </tr>
+              <tr>
+                <td class="td-region td-central">🟡 Central</td>
+                <td class="td-cy">$147.1K</td><td class="td-py">$147.4K</td><td><span class="pill pill-flat">▼ 0%</span></td>
+                <td class="td-profit" style="color:#f87171;">$7.6K</td><td class="td-py">$19.9K</td><td><span class="pill pill-dn">▼ 62%</span></td>
+                <td class="td-qty">2,880</td><td class="td-py">2,359</td><td><span class="pill pill-up">▲ 22%</span></td>
+              </tr>
+              <tr>
+                <td class="td-region td-south">🟢 South</td>
+                <td class="td-cy">$122.9K</td><td class="td-py">$93.6K</td><td><span class="pill pill-up">▲ 31%</span></td>
+                <td class="td-profit" style="color:#f87171;">$8.8K</td><td class="td-py">$17.7K</td><td><span class="pill pill-dn">▼ 50%</span></td>
+                <td class="td-qty">1,915</td><td class="td-py">1,614</td><td><span class="pill pill-up">▲ 19%</span></td>
+              </tr>
+              <tr>
+                <td>Total</td>
+                <td class="td-cy" style="color:var(--accent);">$733.9K</td><td class="td-py">$609.9K</td><td><span class="pill pill-up">▲ 20%</span></td>
+                <td class="td-profit" style="color:var(--accent);">$93.6K</td><td class="td-py">$81.9K</td><td><span class="pill pill-up">▲ 14%</span></td>
+                <td class="td-qty" style="color:var(--accent);">12,515</td><td class="td-py">9,870</td><td><span class="pill pill-up">▲ 27%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- State bars -->
+    <div class="two-col" style="margin-top:1.4rem;">
+      <div class="card reveal">
+        <div class="card-title">🗺️ Top States by Sales</div>
+        <div class="bc-list" id="stateBars">
+          <div class="bc-row"><span class="bc-lbl">California</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#9333ea,#c084fc);width:0" data-w="100"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">New York</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#1d4ed8,#60a5fa);width:0" data-w="72"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Washington</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#9333ea,#c084fc);width:0" data-w="60"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Texas</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#b45309,#fbbf24);width:0" data-w="44"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Pennsylvania</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#1d4ed8,#60a5fa);width:0" data-w="36"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Florida</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#15803d,#4ade80);width:0" data-w="28"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Michigan</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#b45309,#fbbf24);width:0" data-w="22"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Illinois</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#b45309,#fbbf24);width:0" data-w="18"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">North Carolina</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#15803d,#4ade80);width:0" data-w="15"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Ohio</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#1d4ed8,#60a5fa);width:0" data-w="12"></div></div></div>
+          <div class="bc-row"><span class="bc-lbl">Georgia</span><div class="bc-track"><div class="bc-fill" style="background:linear-gradient(90deg,#15803d,#4ade80);width:0" data-w="9"></div></div></div>
+        </div>
+        <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+          <span style="font-size:.68rem;display:flex;align-items:center;gap:.3rem;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#9333ea;display:inline-block;"></span>West</span>
+          <span style="font-size:.68rem;display:flex;align-items:center;gap:.3rem;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block;"></span>East</span>
+          <span style="font-size:.68rem;display:flex;align-items:center;gap:.3rem;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#d97706;display:inline-block;"></span>Central</span>
+          <span style="font-size:.68rem;display:flex;align-items:center;gap:.3rem;color:var(--muted);"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span>South</span>
+        </div>
+      </div>
+
+      <!-- YoY Profit warning section -->
+      <div class="card reveal">
+        <div class="card-title">⚠️ Profit vs Sales Divergence</div>
+        <div style="display:flex;flex-direction:column;gap:.9rem;">
+          <div style="padding:.9rem 1rem;background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.15);border-radius:10px;">
+            <div style="font-size:.72rem;color:#4ade80;font-weight:700;margin-bottom:.4rem;">🟢 WEST — Best Overall Performer</div>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.6;">Sales ▲33% + Profit ▲82% + Qty ▲41% — all three metrics growing strongly. West is the standout region of 2024.</div>
+          </div>
+          <div style="padding:.9rem 1rem;background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.15);border-radius:10px;">
+            <div style="font-size:.72rem;color:#60a5fa;font-weight:700;margin-bottom:.4rem;">🔵 EAST — Solid & Consistent</div>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.6;">Sales ▲18% + Profit ▲65% — healthy growth with strong profit improvement relative to modest sales growth.</div>
+          </div>
+          <div style="padding:.9rem 1rem;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.18);border-radius:10px;">
+            <div style="font-size:.72rem;color:#f87171;font-weight:700;margin-bottom:.4rem;">🟡 CENTRAL — Profit Collapse Alert</div>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.6;">Sales flat (▼0%) but Profit dropped ▼62% from $19.9K to $7.6K — a severe margin compression requiring urgent cost review.</div>
+          </div>
+          <div style="padding:.9rem 1rem;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.18);border-radius:10px;">
+            <div style="font-size:.72rem;color:#fb923c;font-weight:700;margin-bottom:.4rem;">🟢 SOUTH — Growth with Profit Risk</div>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.6;">Sales ▲31% looks great but Profit ▼50% ($17.7K → $8.8K) — revenue growing at the cost of margins. Pricing or cost issue.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- MONTHLY TREND -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Monthly Performance</div>
+    <h2 class="sec-title reveal">Jan–Dec 2024 Monthly Sales by Region</h2>
+    <div class="monthly-chart reveal" id="monthlyChart">
+
+      <div class="month-region">
+        <div class="mr-header">
+          <span class="mr-name" style="color:var(--west);">West</span>
+          <span class="mr-total" style="color:var(--west);">$250K</span>
+        </div>
+        <div class="mr-bars">
+          <!-- Jan-Dec relative heights for West — grows steadily, strong H2 -->
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="45"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="52"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="48"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="55"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="60"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="58"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="65"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="70"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="75"></div>
+          <div class="mb" style="background:rgba(168,85,247,.7);" data-h="80"></div>
+          <div class="mb" style="background:rgba(168,85,247,.9);" data-h="90"></div>
+        </div>
+        <div class="mr-months">
+          <span class="mr-m">Jan</span><span class="mr-m">Mar</span><span class="mr-m">Jun</span><span class="mr-m">Sep</span><span class="mr-m">Dec</span>
+        </div>
+      </div>
+
+      <div class="month-region">
+        <div class="mr-header">
+          <span class="mr-name" style="color:var(--east);">East</span>
+          <span class="mr-total" style="color:var(--east);">$214K</span>
+        </div>
+        <div class="mr-bars">
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="35"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="30"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="40"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="45"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="42"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="48"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="55"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="60"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="65"></div>
+          <div class="mb" style="background:rgba(59,130,246,.9);" data-h="75"></div>
+          <div class="mb" style="background:rgba(59,130,246,.7);" data-h="50"></div>
+        </div>
+        <div class="mr-months">
+          <span class="mr-m">Jan</span><span class="mr-m">Mar</span><span class="mr-m">Jun</span><span class="mr-m">Sep</span><span class="mr-m">Dec</span>
+        </div>
+      </div>
+
+      <div class="month-region">
+        <div class="mr-header">
+          <span class="mr-name" style="color:var(--central);">Central</span>
+          <span class="mr-total" style="color:var(--central);">$147K</span>
+        </div>
+        <div class="mr-bars">
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="42"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="44"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="40"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="42"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="40"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="42"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="44"></div>
+          <div class="mb" style="background:rgba(217,119,6,.7);" data-h="46"></div>
+          <div class="mb" style="background:rgba(217,119,6,.9);" data-h="58"></div>
+        </div>
+        <div class="mr-months">
+          <span class="mr-m">Jan</span><span class="mr-m">Mar</span><span class="mr-m">Jun</span><span class="mr-m">Sep</span><span class="mr-m">Dec</span>
+        </div>
+      </div>
+
+      <div class="month-region">
+        <div class="mr-header">
+          <span class="mr-name" style="color:var(--south);">South</span>
+          <span class="mr-total" style="color:var(--south);">$123K</span>
+        </div>
+        <div class="mr-bars">
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="28"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="25"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="32"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="30"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="35"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="42"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="38"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="45"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="40"></div>
+          <div class="mb" style="background:rgba(34,197,94,.9);" data-h="65"></div>
+          <div class="mb" style="background:rgba(34,197,94,.7);" data-h="55"></div>
+        </div>
+        <div class="mr-months">
+          <span class="mr-m">Jan</span><span class="mr-m">Mar</span><span class="mr-m">Jun</span><span class="mr-m">Sep</span><span class="mr-m">Dec</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- YOY GAUGES -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Year-on-Year Comparison</div>
+    <h2 class="sec-title reveal">YoY Growth Across All Metrics</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;" class="reveal">
+
+      <!-- Sales YoY -->
+      <div class="card">
+        <div class="card-title">💰 YoY Sales Growth</div>
+        <div style="display:flex;flex-direction:column;gap:.8rem;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--west);">West</span><span style="color:#4ade80;font-weight:700;">▲ 33%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:33%;height:100%;background:var(--west);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--south);">South</span><span style="color:#4ade80;font-weight:700;">▲ 31%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:31%;height:100%;background:var(--south);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--east);">East</span><span style="color:#4ade80;font-weight:700;">▲ 18%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:18%;height:100%;background:var(--east);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--central);">Central</span><span style="color:#9ca3af;font-weight:700;">▼ 0%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:1%;height:100%;background:var(--central);border-radius:100px;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profit YoY -->
+      <div class="card">
+        <div class="card-title">📊 YoY Profit Growth</div>
+        <div style="display:flex;flex-direction:column;gap:.8rem;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--west);">West</span><span style="color:#4ade80;font-weight:700;">▲ 82%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:82%;height:100%;background:var(--west);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--east);">East</span><span style="color:#4ade80;font-weight:700;">▲ 65%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:65%;height:100%;background:var(--east);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--central);">Central</span><span style="color:#f87171;font-weight:700;">▼ 62%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:62%;height:100%;background:#f87171;border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--south);">South</span><span style="color:#f87171;font-weight:700;">▼ 50%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:50%;height:100%;background:#f87171;border-radius:100px;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Qty YoY -->
+      <div class="card">
+        <div class="card-title">📦 YoY Quantity Growth</div>
+        <div style="display:flex;flex-direction:column;gap:.8rem;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--west);">West</span><span style="color:#4ade80;font-weight:700;">▲ 41%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:41%;height:100%;background:var(--west);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--central);">Central</span><span style="color:#4ade80;font-weight:700;">▲ 22%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:22%;height:100%;background:var(--central);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--east);">East</span><span style="color:#4ade80;font-weight:700;">▲ 20%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:20%;height:100%;background:var(--east);border-radius:100px;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem;"><span style="color:var(--south);">South</span><span style="color:#4ade80;font-weight:700;">▲ 19%</span></div>
+            <div style="height:8px;background:rgba(255,255,255,.05);border-radius:100px;overflow:hidden;"><div style="width:19%;height:100%;background:var(--south);border-radius:100px;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- KEY INSIGHTS -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Analysis</div>
+    <h2 class="sec-title reveal">Key Insights & Strategic Findings</h2>
+    <div class="ins-grid">
+      <div class="ins-card reveal">
+        <div class="ins-ico">🏆</div>
+        <div class="ins-title">West is the Star Region of 2024</div>
+        <div class="ins-text">West leads in every single metric — <span class="hi-gold">$250.1K sales (+33%)</span>, $43.8K profit (+82%) and 4,270 units (+41%). California and Washington are clearly the primary revenue drivers, confirmed by the state-level map distribution.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">⚠️</div>
+        <div class="ins-title">Central Profit Collapsed 62%</div>
+        <div class="ins-text">Central's sales are flat at $147.1K (▼0%) but profit crashed from <span class="hi-red">$19.9K to just $7.6K (▼62%)</span>. Selling more at lower margins — urgent review of Central region pricing, discounting practices and cost structure is critical.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">📉</div>
+        <div class="ins-title">South Growing Revenue, Losing Profit</div>
+        <div class="ins-text">South grew sales impressively at <span class="hi-gold">▲31%</span> but profit halved from $17.7K to $8.8K (▼50%). This divergence between top-line and bottom-line growth signals margin erosion — likely from over-discounting or rising operational costs.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">🌍</div>
+        <div class="ins-title">California is the #1 State</div>
+        <div class="ins-text">California tops the state map by a wide margin with <span class="hi">the longest bar</span> — ahead of New York (2nd) and Washington (3rd). The West region's strong performance is disproportionately driven by California's volume and revenue contribution.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">📦</div>
+        <div class="ins-title">Quantity Up 27% — Margins Pressured</div>
+        <div class="ins-text">Total quantity grew <span class="hi-gold">▲27% (9,870 → 12,515 units)</span> while total profit grew only ▲14%. Units growing nearly 2× faster than profit means average selling price or margins are being sacrificed for volume — a potential long-term risk.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">📅</div>
+        <div class="ins-title">Strong H2 Trend Across All Regions</div>
+        <div class="ins-text">All four region monthly sparklines show <span class="hi">accelerating sales in Q4</span> (Nov–Dec), with South and West peaking in November. This seasonality pattern should inform 2025 inventory planning and sales target setting for H1 vs H2.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- TOOLS & METHODOLOGY -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Technical Stack</div>
+    <h2 class="sec-title reveal">Tools & Methodology</h2>
+    <div class="two-col">
+      <div class="card reveal">
+        <div class="card-title">🛠️ Tools Used</div>
+        <div class="tools-row">
+          <div class="tc">📊 Power BI</div>
+          <div class="tc">🔢 DAX</div>
+          <div class="tc">🗄️ SQL</div>
+          <div class="tc">🐍 Python</div>
+          <div class="tc">🐼 Pandas</div>
+          <div class="tc">📋 Excel</div>
+          <div class="tc">🗺️ Bing Maps</div>
+          <div class="tc">📈 YoY Calculation</div>
+          <div class="tc">🧹 Data Cleaning</div>
+          <div class="tc">🔍 EDA</div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <div class="card-title">📋 Project Approach</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div><div class="step-title">Data Preparation</div><div class="step-desc">Cleaned transactional sales data, standardized region and state fields, created date dimension table for time intelligence</div></div></div>
+          <div class="step"><div class="step-num">2</div><div><div class="step-title">DAX Measures</div><div class="step-desc">Built CY/PY Sales, Profit and Qty measures using CALCULATE + SAMEPERIODLASTYEAR for accurate YoY comparisons</div></div></div>
+          <div class="step"><div class="step-num">3</div><div><div class="step-title">Regional Trend Analysis</div><div class="step-desc">Created 4 region panels with monthly bar charts and dashed PY reference lines to visualize performance context</div></div></div>
+          <div class="step"><div class="step-num">4</div><div><div class="step-title">Geographic Mapping</div><div class="step-desc">Integrated Bing Maps bubble chart to show state-level sales concentration across the US</div></div></div>
+          <div class="step"><div class="step-num">5</div><div><div class="step-title">Dashboard Design</div><div class="step-desc">Built Select Measure (Sales/Profit/Qty) and Select Year (2021-2024) slicers for full interactive filtering</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- OTHER PROJECTS -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">More Work</div>
+    <h2 class="sec-title reveal">Other Projects</h2>
+    <div class="next-grid reveal">
+      <a href="healthcare_project.html" class="next-card">
+        <div class="nc-ico">🏥</div>
+        <div class="nc-title">Healthcare Analytics</div>
+        <div class="nc-sub">6,597 members · 63% screening coverage</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="hotel_project.html" class="next-card">
+        <div class="nc-ico">🏨</div>
+        <div class="nc-title">Hotel Management</div>
+        <div class="nc-sub">$26M revenue · 75K occupied rooms</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="insurance_project.html" class="next-card">
+        <div class="nc-ico">🛡️</div>
+        <div class="nc-title">Insurance Risk & Claims</div>
+        <div class="nc-sub">37,542 policies · $187.8M claims</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="bert_sentiment_project.html" class="next-card">
+        <div class="nc-ico">🤖</div>
+        <div class="nc-title">BERT Sentiment Analysis</div>
+        <div class="nc-sub">93.4% accuracy · IMDb 50K reviews</div>
+        <div class="nc-arr">View →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">Parth Bhalani.</div>
+  <div class="f-copy">© 2025 · Sales Overview Dashboard Case Study</div>
+  <a href="index.html" class="f-back">← Back to Portfolio</a>
+</footer>
+
+<script>
+  /* cursor */
+  const c=document.getElementById('cur'),r=document.getElementById('cur2');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;c.style.left=mx+'px';c.style.top=my+'px';});
+  (function loop(){rx+=(mx-rx)*.13;ry+=(my-ry)*.13;r.style.left=rx+'px';r.style.top=ry+'px';requestAnimationFrame(loop);})();
+  document.querySelectorAll('a,button,.kpi-c,.card,.ins-card,.next-card,.reg-card,.month-region').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{r.style.width='44px';r.style.height='44px';});
+    el.addEventListener('mouseleave',()=>{r.style.width='30px';r.style.height='30px';});
+  });
+
+  /* scroll reveal */
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('on'),i*70);obs.unobserve(e.target);}});
+  },{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  /* state bars */
+  const barObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.bc-fill[data-w]').forEach((b,i)=>{
+          setTimeout(()=>{b.style.transition='width 1.3s cubic-bezier(.4,0,.2,1)';b.style.width=b.dataset.w+'%';},i*70);
+        });
+        barObs.unobserve(e.target);
+      }
+    });
+  },{threshold:.15});
+  const sb=document.getElementById('stateBars');
+  if(sb) barObs.observe(sb);
+
+  /* monthly bar chart */
+  const mObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.mb[data-h]').forEach((b,i)=>{
+          setTimeout(()=>{b.style.transition='height .8s cubic-bezier(.4,0,.2,1)';b.style.height=b.dataset.h+'px';},i*40);
+        });
+        mObs.unobserve(e.target);
+      }
+    });
+  },{threshold:.2});
+  const mc=document.getElementById('monthlyChart');
+  if(mc) mObs.observe(mc);
+</script>
+</body>
+</html>

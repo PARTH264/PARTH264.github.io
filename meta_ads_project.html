@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Ad Performance | Parth Bhalani</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #040d07;
+    --bg2:    #071209;
+    --bg3:    #09160b;
+    --accent: #34d399;
+    --a2:     #10b981;
+    --a3:     #6ee7b7;
+    --border: rgba(52,211,153,.1);
+    --bord2:  rgba(52,211,153,.22);
+    --text:   #e4f5ec;
+    --muted:  #3d6b4f;
+    --muted2: #2a4f38;
+    --surf:   rgba(52,211,153,.04);
+    /* brand colors */
+    --fb:     #1877f2;
+    --fb2:    #4293f5;
+    --ig:     #e1306c;
+    --ig2:    #f77737;
+    --meta:   #0668e1;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none;}
+
+  #cur {width:8px;height:8px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+  #cur2{width:30px;height:30px;border:1.5px solid rgba(52,211,153,.35);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(52,211,153,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,.022) 1px,transparent 1px);
+    background-size:60px 60px;}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:100;padding:1rem 5rem;display:flex;justify-content:space-between;align-items:center;background:rgba(4,13,7,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);}
+  .nav-back{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--muted);font-size:.85rem;font-weight:500;transition:color .2s;}
+  .nav-back:hover{color:var(--accent);}
+  .nav-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);}
+  .nav-tag{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--border);border-radius:100px;color:var(--muted);}
+
+  /* HERO */
+  .hero{min-height:65vh;display:flex;align-items:center;padding:9rem 5rem 4rem;position:relative;overflow:hidden;}
+  .orb{position:absolute;border-radius:50%;pointer-events:none;}
+  .orb1{width:600px;height:600px;top:-150px;right:-100px;background:radial-gradient(circle,rgba(24,119,242,.07),transparent 65%);animation:drift 10s ease-in-out infinite;}
+  .orb2{width:500px;height:500px;bottom:-80px;left:-80px;background:radial-gradient(circle,rgba(225,48,108,.06),transparent 70%);animation:drift 14s ease-in-out infinite reverse;}
+  .orb3{width:300px;height:300px;top:35%;left:35%;background:radial-gradient(circle,rgba(52,211,153,.04),transparent 70%);animation:drift 18s ease-in-out infinite;}
+  @keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(25px,-15px)}66%{transform:translate(-15px,12px)}}
+
+  .hero-content{position:relative;z-index:2;max-width:860px;}
+  .breadcrumb{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);margin-bottom:1.4rem;animation:fadeUp .6s ease both;}
+  .breadcrumb a{color:var(--accent);text-decoration:none;}
+  .badge-row{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1.3rem;animation:fadeUp .6s .07s ease both;}
+  .pb{font-size:.72rem;font-weight:600;letter-spacing:.06em;padding:.28rem .75rem;border-radius:100px;}
+  .pb-meta{color:#fff;background:rgba(6,104,225,.15);border:1px solid rgba(6,104,225,.3);}
+  .pb-fb{color:var(--fb2);background:rgba(24,119,242,.1);border:1px solid rgba(24,119,242,.25);}
+  .pb-ig{color:#f77737;background:rgba(225,48,108,.08);border:1px solid rgba(225,48,108,.2);}
+  .pb-g{color:var(--accent);background:rgba(52,211,153,.07);border:1px solid var(--border);}
+
+  .proj-title{font-family:'Outfit',sans-serif;font-size:clamp(2.2rem,5vw,4.3rem);font-weight:800;letter-spacing:-.04em;line-height:.95;animation:fadeUp .6s .13s ease both;}
+  .proj-title .fb{color:var(--fb2);}
+  .proj-title .ig{color:#f77737;}
+  .proj-sub{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.2rem;color:var(--muted);margin-top:.7rem;animation:fadeUp .6s .2s ease both;}
+
+  .platform-pills{display:flex;gap:1rem;margin-top:1.8rem;animation:fadeUp .6s .25s ease both;}
+  .plat-pill{display:flex;align-items:center;gap:.7rem;padding:.8rem 1.4rem;border-radius:12px;font-weight:700;font-size:.85rem;}
+  .plat-fb{background:rgba(24,119,242,.12);border:1px solid rgba(24,119,242,.3);color:var(--fb2);}
+  .plat-ig{background:rgba(225,48,108,.1);border:1px solid rgba(225,48,108,.25);color:#f77737;}
+  .plat-ico{font-size:1.2rem;}
+
+  .hero-meta{display:flex;flex-wrap:wrap;gap:1.8rem;margin-top:1.6rem;padding:1.2rem 1.6rem;background:var(--surf);border:1px solid var(--border);border-radius:14px;animation:fadeUp .6s .3s ease both;width:fit-content;}
+  .m-lbl{font-size:.67rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);margin-bottom:.25rem;}
+  .m-val{font-size:.88rem;font-weight:600;color:var(--text);}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* LAYOUT */
+  .sec{position:relative;z-index:2;}
+  .inner{max-width:1200px;margin:0 auto;padding:5rem;}
+  .sec-div{position:relative;z-index:2;height:1px;background:linear-gradient(90deg,transparent,var(--bord2),transparent);}
+  .sec-label{display:inline-flex;align-items:center;gap:.7rem;font-size:.7rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:.7rem;}
+  .sec-label::before{content:'';width:26px;height:1px;background:var(--accent);}
+  .sec-title{font-family:'Outfit',sans-serif;font-size:clamp(1.7rem,3vw,2.3rem);font-weight:800;letter-spacing:-.03em;margin-bottom:2.5rem;}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal.on{opacity:1;transform:translateY(0);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:border-color .3s;}
+  .card:hover{border-color:var(--bord2);}
+
+  /* PLATFORM TOGGLE HEADER */
+  .plat-header{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;}
+  .plat-badge{font-size:.7rem;font-weight:700;padding:.22rem .65rem;border-radius:100px;letter-spacing:.06em;}
+  .fb-badge{background:rgba(24,119,242,.15);color:var(--fb2);border:1px solid rgba(24,119,242,.25);}
+  .ig-badge{background:rgba(247,119,55,.12);color:#f77737;border:1px solid rgba(247,119,55,.25);}
+  .card-title{font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:700;margin-bottom:1.2rem;padding-bottom:.65rem;border-bottom:1px solid var(--border);}
+  .ct-fb{color:var(--fb2);}
+  .ct-ig{color:#f77737;}
+  .ct-meta{color:var(--accent);}
+
+  /* PLATFORM SIDE-BY-SIDE KPI */
+  .platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+  .plat-block{border-radius:16px;padding:1.6rem;border:1px solid transparent;transition:all .3s;}
+  .plat-block:hover{transform:translateY(-3px);}
+  .fb-block{background:linear-gradient(135deg,rgba(24,119,242,.12),rgba(24,119,242,.04));border-color:rgba(24,119,242,.2);}
+  .ig-block{background:linear-gradient(135deg,rgba(225,48,108,.1),rgba(247,119,55,.05));border-color:rgba(225,48,108,.2);}
+  .pb-header{display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem;}
+  .pb-icon{font-size:1.6rem;}
+  .pb-name{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;}
+  .kpi-list{display:flex;flex-direction:column;gap:.6rem;}
+  .kpi-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:rgba(0,0,0,.2);border-radius:8px;}
+  .kl{font-size:.74rem;color:var(--muted);}
+  .kv{font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:700;}
+  .kv-fb{color:var(--fb2);}
+  .kv-ig{color:#f77737;}
+  .kv-g{color:var(--accent);}
+
+  /* COMPARISON TABLE */
+  .cmp-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+  .cmp-table th{padding:.6rem .9rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+  .cmp-table th:not(:first-child){text-align:center;}
+  .cmp-table td{padding:.65rem .9rem;border-bottom:1px solid rgba(52,211,153,.05);text-align:center;}
+  .cmp-table td:first-child{text-align:left;font-weight:600;color:var(--a3);}
+  .cmp-table tr:hover td{background:rgba(52,211,153,.025);}
+  .cmp-table tr:last-child td{border-top:1px solid var(--bord2);font-weight:700;}
+  .td-fb{color:var(--fb2);font-weight:600;}
+  .td-ig{color:#f77737;font-weight:600;}
+  .td-win{background:rgba(52,211,153,.08);border-radius:6px;padding:.15rem .5rem;color:var(--accent);font-weight:700;font-size:.72rem;}
+  .td-lose{color:var(--muted);font-size:.8rem;}
+
+  /* AD TYPE TABLE */
+  .ad-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+  .ad-table th{padding:.5rem .7rem;text-align:left;font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+  .ad-table th:not(:first-child){text-align:center;}
+  .ad-table td{padding:.55rem .7rem;border-bottom:1px solid rgba(52,211,153,.04);text-align:center;}
+  .ad-table td:first-child{text-align:left;font-weight:600;}
+  .ad-table tr:hover td{background:rgba(52,211,153,.025);}
+  .hi-cell{background:rgba(52,211,153,.08);color:var(--accent);font-weight:700;border-radius:4px;padding:.1rem .35rem;}
+  .warn-cell{background:rgba(248,113,113,.08);color:#f87171;font-weight:700;border-radius:4px;padding:.1rem .35rem;}
+  .neu-cell{color:var(--text);font-weight:500;}
+
+  /* DONUT (CSS) */
+  .donut-wrap{display:flex;align-items:center;gap:1.2rem;}
+  .donut{width:110px;height:110px;border-radius:50%;flex-shrink:0;position:relative;}
+  .donut-inner{position:absolute;inset:22px;border-radius:50%;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .d-val{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:800;color:var(--text);}
+  .d-sub{font-size:.58rem;color:var(--muted);}
+  .leg{display:flex;flex-direction:column;gap:.5rem;flex:1;}
+  .leg-row{display:flex;align-items:center;gap:.5rem;font-size:.76rem;}
+  .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .leg-name{color:var(--muted);flex:1;}
+  .leg-pct{font-weight:600;color:var(--text);font-size:.78rem;}
+  /* FB gender: Female 43%, Male 22%, All 35% */
+  .fb-gender{background:conic-gradient(#1877f2 0% 43%, #f77737 43% 65%, #9ca3af 65% 100%);}
+  /* IG gender: Female 37%, Male 27%, All 36% */
+  .ig-gender{background:conic-gradient(#e1306c 0% 37%, #60a5fa 37% 64%, #9ca3af 64% 100%);}
+
+  /* BAR */
+  .bc-list{display:flex;flex-direction:column;gap:.55rem;}
+  .bc-row{display:flex;align-items:center;gap:.65rem;}
+  .bc-lbl{font-size:.73rem;color:var(--muted);text-align:right;flex-shrink:0;width:80px;}
+  .bc-track{flex:1;height:18px;background:rgba(52,211,153,.05);border-radius:4px;overflow:hidden;}
+  .bc-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:.35rem;font-size:.67rem;font-weight:700;color:#fff;transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+  .bc-fill-fb{background:linear-gradient(90deg,#1565c0,var(--fb2));}
+  .bc-fill-ig{background:linear-gradient(90deg,#c2185b,var(--ig2));}
+
+  /* DASHBOARD FRAME */
+  .dash-frame{border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.6);transition:border-color .3s;}
+  .dash-frame:hover{border-color:var(--bord2);}
+  .dash-bar{background:var(--bg3);padding:.65rem 1rem;display:flex;align-items:center;gap:.45rem;border-bottom:1px solid var(--border);}
+  .db-dot{width:10px;height:10px;border-radius:50%;}
+  .db-lbl{font-size:.68rem;color:var(--muted);margin-left:auto;letter-spacing:.07em;text-transform:uppercase;}
+  .dash-frame img{width:100%;display:block;filter:brightness(.93);}
+
+  /* INSIGHTS */
+  .ins-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;}
+  .ins-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;transition:all .3s;}
+  .ins-card:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .ins-ico{font-size:1.5rem;margin-bottom:.7rem;}
+  .ins-title{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:.4rem;}
+  .ins-text{font-size:.8rem;line-height:1.75;color:var(--muted);}
+  .hi{color:var(--a3);font-weight:600;}
+  .hi-fb{color:var(--fb2);font-weight:600;}
+  .hi-ig{color:#f77737;font-weight:600;}
+
+  /* TOOLS */
+  .tools-row{display:flex;flex-wrap:wrap;gap:.65rem;}
+  .tc{display:flex;align-items:center;gap:.45rem;padding:.45rem 1rem;border-radius:100px;background:var(--surf);border:1px solid var(--border);font-size:.8rem;font-weight:500;color:var(--text);transition:all .2s;}
+  .tc:hover{border-color:var(--bord2);background:rgba(52,211,153,.08);}
+
+  /* STEPS */
+  .steps{display:flex;flex-direction:column;gap:.85rem;}
+  .step{display:flex;gap:.9rem;align-items:flex-start;}
+  .step-num{width:26px;height:26px;border-radius:50%;background:rgba(24,119,242,.12);border:1px solid rgba(24,119,242,.3);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--fb2);flex-shrink:0;margin-top:.1rem;}
+  .step-title{font-size:.86rem;font-weight:600;color:var(--text);margin-bottom:.2rem;}
+  .step-desc{font-size:.78rem;color:var(--muted);line-height:1.6;}
+
+  /* COUNTRY */
+  .country-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;}
+  .cntry{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.75rem;text-align:center;transition:all .2s;}
+  .cntry:hover{border-color:var(--bord2);}
+  .cntry-flag{font-size:1.3rem;margin-bottom:.3rem;}
+  .cntry-name{font-size:.74rem;font-weight:600;color:var(--text);}
+
+  /* NEXT */
+  .next-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+  .next-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-decoration:none;color:var(--text);transition:all .3s;display:flex;flex-direction:column;gap:.5rem;}
+  .next-card:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .nc-ico{font-size:1.6rem;}
+  .nc-title{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;}
+  .nc-sub{font-size:.74rem;color:var(--muted);}
+  .nc-arr{font-size:.8rem;color:var(--accent);margin-top:auto;}
+
+  footer{position:relative;z-index:2;border-top:1px solid var(--border);padding:1.6rem 5rem;display:flex;justify-content:space-between;align-items:center;background:var(--bg);}
+  .f-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:.95rem;color:var(--accent);}
+  .f-copy{font-size:.78rem;color:var(--muted2);}
+  .f-back{font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s;}
+  .f-back:hover{color:var(--accent);}
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem;}
+    .hero,.inner{padding-left:1.5rem;padding-right:1.5rem;}
+    .two-col,.platform-grid,.ins-grid,.next-grid,.country-grid{grid-template-columns:1fr 1fr;}
+    footer{flex-direction:column;gap:.8rem;padding:1.2rem;text-align:center;}
+  }
+</style>
+</head>
+<body>
+<div id="cur"></div><div id="cur2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-back">← Back to Portfolio</a>
+  <div class="nav-logo">Parth Bhalani</div>
+  <div class="nav-tag">Case Study</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero sec">
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+  <div class="hero-content">
+    <div class="breadcrumb reveal">
+      <a href="index.html">Portfolio</a> <span>/</span> <span>Meta Ad Performance</span>
+    </div>
+    <div class="badge-row reveal">
+      <span class="pb pb-meta">𝕄 Meta Ads</span>
+      <span class="pb pb-fb">f Facebook</span>
+      <span class="pb pb-ig">📷 Instagram</span>
+      <span class="pb pb-g">Power BI</span>
+      <span class="pb pb-g">DAX</span>
+      <span class="pb pb-g">Marketing Analytics</span>
+      <span class="pb pb-g">CTR · ROAS · CVR</span>
+    </div>
+    <h1 class="proj-title">Meta Ad<br><span class="fb">Facebook</span> <span style="color:var(--muted);font-size:60%;">vs</span> <span class="ig">Instagram</span></h1>
+    <p class="proj-sub">Cross-platform ad performance — impressions, CTR, engagement rate, conversions & budget analysis</p>
+    <div class="platform-pills reveal">
+      <div class="plat-pill plat-fb"><span class="plat-ico">📘</span> Facebook · 216K Impressions · 11.76% CTR</div>
+      <div class="plat-pill plat-ig"><span class="plat-ico">📸</span> Instagram · 123.8K Impressions · 11.86% CTR</div>
+    </div>
+    <div class="hero-meta reveal">
+      <div><div class="m-lbl">Combined Budget</div><div class="m-val">$2.5M</div></div>
+      <div><div class="m-lbl">Avg per Campaign</div><div class="m-val">$50.7K</div></div>
+      <div><div class="m-lbl">Platforms</div><div class="m-val">Facebook + Instagram</div></div>
+      <div><div class="m-lbl">Ad Types Tracked</div><div class="m-val">Carousel · Image · Stories · Video</div></div>
+      <div><div class="m-lbl">Date Filter</div><div class="m-val">June (Calendar View)</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- DASHBOARD SCREENSHOTS -->
+<section class="sec">
+  <div class="inner" style="padding-top:3rem;padding-bottom:3rem;">
+    <div class="sec-label reveal">Dashboard Previews</div>
+    <h2 class="sec-title reveal">Two-Platform Power BI Report</h2>
+    <div class="two-col reveal">
+      <div>
+        <div style="font-size:.74rem;color:var(--fb2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem;font-weight:700;">📘 Facebook Dashboard</div>
+        <div class="dash-frame">
+          <div class="dash-bar">
+            <div class="db-dot" style="background:#ff5f57"></div>
+            <div class="db-dot" style="background:#febc2e"></div>
+            <div class="db-dot" style="background:#28c840"></div>
+            <span class="db-lbl">Facebook · Meta Ad Performance · Power BI</span>
+          </div>
+          <img src="Assets/Facebook Dashboard.png" alt="Facebook Dashboard">
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.74rem;color:#f77737;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem;font-weight:700;">📸 Instagram Dashboard</div>
+        <div class="dash-frame">
+          <div class="dash-bar">
+            <div class="db-dot" style="background:#ff5f57"></div>
+            <div class="db-dot" style="background:#febc2e"></div>
+            <div class="db-dot" style="background:#28c840"></div>
+            <span class="db-lbl">Instagram · Meta Ad Performance · Power BI</span>
+          </div>
+          <img src="Assets/Instagram Dashboard.png"alt="Instagram Dashboard">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- PLATFORM KPIs SIDE BY SIDE -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Platform Metrics</div>
+    <h2 class="sec-title reveal">Facebook vs Instagram — Full KPI Breakdown</h2>
+    <div class="platform-grid reveal">
+
+      <!-- FACEBOOK -->
+      <div class="plat-block fb-block">
+        <div class="pb-header">
+          <span class="pb-icon">📘</span>
+          <span class="pb-name" style="color:var(--fb2);">Facebook</span>
+        </div>
+        <div class="kpi-list">
+          <div class="kpi-row"><span class="kl">Impressions</span><span class="kv kv-fb">216.0K</span></div>
+          <div class="kpi-row"><span class="kl">Clicks</span><span class="kv kv-fb">25.4K</span></div>
+          <div class="kpi-row"><span class="kl">Shares</span><span class="kv kv-fb">1.3K</span></div>
+          <div class="kpi-row"><span class="kl">Comments</span><span class="kv kv-fb">2.6K</span></div>
+          <div class="kpi-row"><span class="kl">Purchases (Conv.)</span><span class="kv kv-fb">1.3K</span></div>
+          <div class="kpi-row"><span class="kl">Total Engagements</span><span class="kv kv-fb">29K</span></div>
+          <div class="kpi-row"><span class="kl">CTR</span><span class="kv kv-g">11.76%</span></div>
+          <div class="kpi-row"><span class="kl">Engagement Rate</span><span class="kv kv-g">13.56%</span></div>
+          <div class="kpi-row"><span class="kl">Conversion Rate</span><span class="kv kv-g">5.21%</span></div>
+          <div class="kpi-row"><span class="kl">Purchase Rate</span><span class="kv kv-g">0.61%</span></div>
+          <div class="kpi-row"><span class="kl">Total Budget</span><span class="kv kv-fb">$2.5M</span></div>
+          <div class="kpi-row"><span class="kl">Avg Budget/Campaign</span><span class="kv kv-fb">$50.7K</span></div>
+        </div>
+      </div>
+
+      <!-- INSTAGRAM -->
+      <div class="plat-block ig-block">
+        <div class="pb-header">
+          <span class="pb-icon">📸</span>
+          <span class="pb-name" style="color:#f77737;">Instagram</span>
+        </div>
+        <div class="kpi-list">
+          <div class="kpi-row"><span class="kl">Impressions</span><span class="kv kv-ig">123.8K</span></div>
+          <div class="kpi-row"><span class="kl">Clicks</span><span class="kv kv-ig">14.7K</span></div>
+          <div class="kpi-row"><span class="kl">Shares</span><span class="kv kv-ig">682</span></div>
+          <div class="kpi-row"><span class="kl">Comments</span><span class="kv kv-ig">1.5K</span></div>
+          <div class="kpi-row"><span class="kl">Purchases (Conv.)</span><span class="kv kv-ig">708</span></div>
+          <div class="kpi-row"><span class="kl">Total Engagements</span><span class="kv kv-ig">17K</span></div>
+          <div class="kpi-row"><span class="kl">CTR</span><span class="kv kv-g">11.86%</span></div>
+          <div class="kpi-row"><span class="kl">Engagement Rate</span><span class="kv kv-g">13.60%</span></div>
+          <div class="kpi-row"><span class="kl">Conversion Rate</span><span class="kv kv-g">4.82%</span></div>
+          <div class="kpi-row"><span class="kl">Purchase Rate</span><span class="kv kv-g">0.57%</span></div>
+          <div class="kpi-row"><span class="kl">Total Budget</span><span class="kv kv-ig">$2.5M</span></div>
+          <div class="kpi-row"><span class="kl">Avg Budget/Campaign</span><span class="kv kv-ig">$50.7K</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- HEAD-TO-HEAD COMPARISON TABLE -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Head-to-Head</div>
+    <h2 class="sec-title reveal">Facebook vs Instagram — Who Wins Each Metric?</h2>
+    <div class="card reveal">
+      <div class="card-title ct-meta">⚔️ Platform Comparison Table — All Key Metrics</div>
+      <div style="overflow-x:auto;">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th style="color:var(--fb2);">📘 Facebook</th>
+              <th style="color:#f77737;">📸 Instagram</th>
+              <th>Winner</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Impressions</td>
+              <td class="td-fb">216.0K</td>
+              <td class="td-ig">123.8K</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">74.5% more reach</td>
+            </tr>
+            <tr>
+              <td>Clicks</td>
+              <td class="td-fb">25.4K</td>
+              <td class="td-ig">14.7K</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">72.8% more clicks</td>
+            </tr>
+            <tr>
+              <td>CTR</td>
+              <td class="td-fb">11.76%</td>
+              <td class="td-ig">11.86%</td>
+              <td><span class="td-win">📸 IG</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">+0.10% — almost tied</td>
+            </tr>
+            <tr>
+              <td>Engagement Rate</td>
+              <td class="td-fb">13.56%</td>
+              <td class="td-ig">13.60%</td>
+              <td><span class="td-win">📸 IG</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">+0.04% — virtually tied</td>
+            </tr>
+            <tr>
+              <td>Conversion Rate</td>
+              <td class="td-fb">5.21%</td>
+              <td class="td-ig">4.82%</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">FB converts better</td>
+            </tr>
+            <tr>
+              <td>Purchase Rate</td>
+              <td class="td-fb">0.61%</td>
+              <td class="td-ig">0.57%</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">Higher purchase intent</td>
+            </tr>
+            <tr>
+              <td>Purchases</td>
+              <td class="td-fb">1,300</td>
+              <td class="td-ig">708</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">83.6% more conversions</td>
+            </tr>
+            <tr>
+              <td>Engagements</td>
+              <td class="td-fb">29K</td>
+              <td class="td-ig">17K</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">70.6% more total engagement</td>
+            </tr>
+            <tr>
+              <td>Comments</td>
+              <td class="td-fb">2.6K</td>
+              <td class="td-ig">1.5K</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">More discussion/community</td>
+            </tr>
+            <tr>
+              <td>Shares</td>
+              <td class="td-fb">1.3K</td>
+              <td class="td-ig">682</td>
+              <td><span class="td-win">📘 FB</span></td>
+              <td style="font-size:.75rem;color:var(--muted);">Higher virality</td>
+            </tr>
+            <tr>
+              <td>Budget</td>
+              <td class="td-fb">$2.5M</td>
+              <td class="td-ig">$2.5M</td>
+              <td style="color:var(--muted);">Tied</td>
+              <td style="font-size:.75rem;color:var(--muted);">Equal budget allocation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Winner summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.2rem;">
+        <div style="background:rgba(24,119,242,.08);border:1px solid rgba(24,119,242,.2);border-radius:12px;padding:1rem;">
+          <div style="font-size:.75rem;color:var(--fb2);font-weight:700;margin-bottom:.5rem;">📘 FACEBOOK WINS 8/11</div>
+          <div style="font-size:.8rem;color:var(--muted);line-height:1.7;">Leads in volume metrics — impressions, clicks, conversions, purchases, engagements, comments, shares and conversion rate. Facebook is the primary revenue-driving platform.</div>
+        </div>
+        <div style="background:rgba(247,119,55,.07);border:1px solid rgba(247,119,55,.2);border-radius:12px;padding:1rem;">
+          <div style="font-size:.75rem;color:#f77737;font-weight:700;margin-bottom:.5rem;">📸 INSTAGRAM WINS 2/11</div>
+          <div style="font-size:.8rem;color:var(--muted);line-height:1.7;">Instagram slightly wins on CTR (11.86% vs 11.76%) and Engagement Rate (13.60% vs 13.56%), showing higher audience quality despite lower volume — more efficient per impression.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- AD TYPE ANALYSIS -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Ad Format Analysis</div>
+    <h2 class="sec-title reveal">Performance by Ad Type — Both Platforms</h2>
+    <div class="two-col">
+
+      <!-- Facebook Ad Types -->
+      <div class="card reveal">
+        <div class="plat-header"><span class="plat-badge fb-badge">📘 FACEBOOK</span></div>
+        <div class="card-title ct-fb">Analysis by Ad Type</div>
+        <div style="overflow-x:auto;">
+          <table class="ad-table">
+            <thead>
+              <tr><th>Ad Type</th><th>IMPR</th><th>CLKS</th><th>CTR</th><th>PR</th><th>CR</th><th>ER</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--fb2);">Carousel</td>
+                <td class="neu-cell">48K</td><td class="neu-cell">6K</td>
+                <td><span class="neu-cell">11.7%</span></td>
+                <td class="neu-cell">0.59%</td>
+                <td><span class="hi-cell">5.1%</span></td>
+                <td class="neu-cell">13.4%</td>
+              </tr>
+              <tr>
+                <td style="color:var(--fb2);">Image</td>
+                <td class="neu-cell">51K</td><td class="neu-cell">6K</td>
+                <td><span class="neu-cell">11.7%</span></td>
+                <td class="neu-cell">0.57%</td>
+                <td><span class="warn-cell">4.9%</span></td>
+                <td><span class="hi-cell">13.5%</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--fb2);">Stories</td>
+                <td><span class="hi-cell">72K</span></td><td><span class="hi-cell">8K</span></td>
+                <td class="neu-cell">11.8%</td>
+                <td><span class="hi-cell">0.65%</span></td>
+                <td><span class="hi-cell">5.5%</span></td>
+                <td><span class="hi-cell">13.6%</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--fb2);">Video</td>
+                <td class="neu-cell">46K</td><td class="neu-cell">5K</td>
+                <td><span class="hi-cell">11.9%</span></td>
+                <td class="neu-cell">0.62%</td>
+                <td class="neu-cell">5.2%</td>
+                <td><span class="hi-cell">13.7%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:1rem;padding:.8rem 1rem;background:rgba(24,119,242,.06);border:1px solid rgba(24,119,242,.15);border-radius:10px;">
+          <div style="font-size:.72rem;color:var(--fb2);font-weight:700;margin-bottom:.3rem;">🏆 FB Best Performer: Stories</div>
+          <div style="font-size:.77rem;color:var(--muted);">Stories dominates with 72K impressions, 8K clicks, highest PR (0.65%), best CR (5.5%) and strong ER (13.6%). Video leads CTR at 11.9%.</div>
+        </div>
+      </div>
+
+      <!-- Instagram Ad Types -->
+      <div class="card reveal">
+        <div class="plat-header"><span class="plat-badge ig-badge">📸 INSTAGRAM</span></div>
+        <div class="card-title ct-ig">Analysis by Ad Type</div>
+        <div style="overflow-x:auto;">
+          <table class="ad-table">
+            <thead>
+              <tr><th>Ad Type</th><th>IMPR</th><th>CLKS</th><th>CTR</th><th>PR</th><th>CR</th><th>ER</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:#f77737;">Carousel</td>
+                <td class="neu-cell">39K</td><td class="neu-cell">5K</td>
+                <td class="neu-cell">11.7%</td>
+                <td class="neu-cell">0.61%</td>
+                <td><span class="hi-cell">5.2%</span></td>
+                <td class="neu-cell">13.5%</td>
+              </tr>
+              <tr>
+                <td style="color:#f77737;">Image</td>
+                <td class="neu-cell">37K</td><td class="neu-cell">5K</td>
+                <td><span class="hi-cell">12.2%</span></td>
+                <td class="neu-cell">0.53%</td>
+                <td><span class="warn-cell">4.3%</span></td>
+                <td><span class="hi-cell">13.9%</span></td>
+              </tr>
+              <tr>
+                <td style="color:#f77737;">Stories</td>
+                <td class="neu-cell">37K</td><td class="neu-cell">4K</td>
+                <td class="neu-cell">11.7%</td>
+                <td class="neu-cell">0.59%</td>
+                <td class="neu-cell">5.0%</td>
+                <td class="neu-cell">13.4%</td>
+              </tr>
+              <tr>
+                <td style="color:#f77737;">Video</td>
+                <td><span class="warn-cell">10K</span></td><td><span class="warn-cell">1K</span></td>
+                <td class="neu-cell">12.0%</td>
+                <td class="neu-cell">0.53%</td>
+                <td class="neu-cell">4.4%</td>
+                <td><span class="hi-cell">13.7%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:1rem;padding:.8rem 1rem;background:rgba(247,119,55,.07);border:1px solid rgba(247,119,55,.18);border-radius:10px;">
+          <div style="font-size:.72rem;color:#f77737;font-weight:700;margin-bottom:.3rem;">🏆 IG Best Performer: Image</div>
+          <div style="font-size:.77rem;color:var(--muted);">Image leads with highest CTR (12.2%) and best ER (13.9%). Carousel has the best CR (5.2%). Video underperforms with only 10K impressions and 1K clicks on Instagram.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- GENDER + COUNTRIES -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Audience Demographics</div>
+    <h2 class="sec-title reveal">Gender Split & Geographic Reach</h2>
+    <div class="two-col" style="margin-bottom:1.4rem;">
+
+      <!-- Gender comparison -->
+      <div class="card reveal">
+        <div class="card-title ct-meta">👥 Engagement by Gender — Platform Comparison</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+          <div>
+            <div style="font-size:.72rem;color:var(--fb2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem;">📘 Facebook</div>
+            <div class="donut-wrap">
+              <div class="donut fb-gender"><div class="donut-inner"><div class="d-val">29K</div><div class="d-sub">Total</div></div></div>
+              <div class="leg">
+                <div class="leg-row"><div class="leg-dot" style="background:#1877f2"></div><span class="leg-name">Female</span><span class="leg-pct">43% · 13K</span></div>
+                <div class="leg-row"><div class="leg-dot" style="background:#f77737"></div><span class="leg-name">Male</span><span class="leg-pct">22% · 6K</span></div>
+                <div class="leg-row"><div class="leg-dot" style="background:#9ca3af"></div><span class="leg-name">All/Other</span><span class="leg-pct">35% · 10K</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.72rem;color:#f77737;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem;">📸 Instagram</div>
+            <div class="donut-wrap">
+              <div class="donut ig-gender"><div class="donut-inner"><div class="d-val">17K</div><div class="d-sub">Total</div></div></div>
+              <div class="leg">
+                <div class="leg-row"><div class="leg-dot" style="background:#e1306c"></div><span class="leg-name">Female</span><span class="leg-pct">37% · 6K</span></div>
+                <div class="leg-row"><div class="leg-dot" style="background:#60a5fa"></div><span class="leg-name">Male</span><span class="leg-pct">27% · 4K</span></div>
+                <div class="leg-row"><div class="leg-dot" style="background:#9ca3af"></div><span class="leg-name">All/Other</span><span class="leg-pct">36% · 6K</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1rem;padding:.8rem 1rem;background:var(--surf);border:1px solid var(--border);border-radius:10px;font-size:.78rem;color:var(--muted);line-height:1.7;">
+          Both platforms show <strong style="color:var(--text);">female-dominant engagement</strong> — Facebook 43% female vs Instagram 37% female. Facebook has a stronger female skew, while Instagram has a more balanced gender distribution.
+        </div>
+      </div>
+
+      <!-- Age distribution visual -->
+      <div class="card reveal">
+        <div class="card-title ct-meta">🎯 Target Age Distribution Insight</div>
+        <div style="display:flex;flex-direction:column;gap:.8rem;">
+          <div style="padding:.9rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+            <div style="font-size:.75rem;color:var(--accent);font-weight:700;margin-bottom:.4rem;">Both Platforms — Age Pattern</div>
+            <div style="font-size:.8rem;color:var(--muted);line-height:1.7;">Both dashboards show an identical age distribution shape: <strong style="color:var(--text);">peak engagement around age 18-25</strong>, sharp drop after 30, then long tail declining through age 45+. Peak ~1,800 engagements (FB) and ~900 (IG) at youngest cohort.</div>
+          </div>
+          <div style="padding:.9rem;background:rgba(24,119,242,.06);border:1px solid rgba(24,119,242,.15);border-radius:10px;">
+            <div style="font-size:.75rem;color:var(--fb2);font-weight:700;margin-bottom:.3rem;">📘 Facebook Age Peak</div>
+            <div style="font-size:.78rem;color:var(--muted);">Y-axis peaks at ~2,000 engagements — Facebook captures a larger young adult audience volume at every age bracket vs Instagram.</div>
+          </div>
+          <div style="padding:.9rem;background:rgba(247,119,55,.07);border:1px solid rgba(247,119,55,.18);border-radius:10px;">
+            <div style="font-size:.75rem;color:#f77737;font-weight:700;margin-bottom:.3rem;">📸 Instagram Age Peak</div>
+            <div style="font-size:.78rem;color:var(--muted);">Y-axis peaks at ~1,000 engagements — Instagram's younger audience is more concentrated in the 18-22 range with a faster dropoff post-25.</div>
+          </div>
+          <div style="padding:.9rem;background:var(--surf);border:1px solid var(--border);border-radius:10px;">
+            <div style="font-size:.75rem;color:var(--accent);font-weight:700;margin-bottom:.3rem;">💡 Strategic Recommendation</div>
+            <div style="font-size:.78rem;color:var(--muted);">Target 18-30 audience on both platforms. For ages 30+, shift budget toward Facebook which maintains stronger engagement volume in that cohort.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Countries -->
+    <div class="card reveal">
+      <div class="card-title ct-meta">🌍 Geographic Reach — Countries Active on Both Platforms</div>
+      <div class="country-grid">
+        <div class="cntry"><div class="cntry-flag">🇺🇸</div><div class="cntry-name">United States</div></div>
+        <div class="cntry"><div class="cntry-flag">🇬🇧</div><div class="cntry-name">United Kingdom</div></div>
+        <div class="cntry"><div class="cntry-flag">🇫🇷</div><div class="cntry-name">France</div></div>
+        <div class="cntry"><div class="cntry-flag">🇩🇪</div><div class="cntry-name">Germany</div></div>
+        <div class="cntry"><div class="cntry-flag">🇮🇳</div><div class="cntry-name">India</div></div>
+        <div class="cntry"><div class="cntry-flag">🇯🇵</div><div class="cntry-name">Japan</div></div>
+        <div class="cntry"><div class="cntry-flag">🇧🇷</div><div class="cntry-name">Brazil</div></div>
+        <div class="cntry"><div class="cntry-flag">🇲🇽</div><div class="cntry-name">Mexico</div></div>
+        <div class="cntry"><div class="cntry-flag">🇨🇦</div><div class="cntry-name">Canada</div></div>
+        <div class="cntry"><div class="cntry-flag">🇦🇺</div><div class="cntry-name">Australia</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- KEY INSIGHTS -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Analysis</div>
+    <h2 class="sec-title reveal">Key Insights & Strategic Findings</h2>
+    <div class="ins-grid">
+      <div class="ins-card reveal">
+        <div class="ins-ico">📘</div>
+        <div class="ins-title">Facebook Dominates Volume</div>
+        <div class="ins-text">Facebook delivers <span class="hi-fb">216K impressions vs Instagram's 123.8K</span> — 74.5% more reach on equal budgets ($2.5M each). Facebook wins on all absolute volume metrics: clicks, conversions, engagements and comments.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">📸</div>
+        <div class="ins-title">Instagram More Efficient Per Impression</div>
+        <div class="ins-text">Despite lower volume, Instagram's <span class="hi-ig">CTR (11.86%) and ER (13.60%)</span> edge ahead of Facebook. This suggests Instagram's smaller, more curated audience engages more deeply — quality over quantity.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">🎯</div>
+        <div class="ins-title">Stories = Best Format on Facebook</div>
+        <div class="ins-text">Facebook Stories dominates with <span class="hi-fb">72K impressions, 8K clicks, best CR 5.5% and PR 0.65%</span>. It's the single best-performing ad format across the entire Meta portfolio — should receive highest budget allocation.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">🖼️</div>
+        <div class="ins-title">Image Ads Win on Instagram</div>
+        <div class="ins-text">Instagram Image ads achieve <span class="hi-ig">12.2% CTR (highest across all formats)</span> and 13.9% ER. Instagram's visual-first audience responds best to high-quality single images over video or Stories formats.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">📹</div>
+        <div class="ins-title">Video Underperforms on Instagram</div>
+        <div class="ins-text">Instagram Video recorded only <span class="hi">10K impressions and 1K clicks</span> — the lowest of all formats. Facebook Video performs significantly better (46K impressions). Budget should be reallocated from IG Video to IG Image or Carousel.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">👩</div>
+        <div class="ins-title">Female Audience Drives More Engagement</div>
+        <div class="ins-text">Females dominate engagement on both platforms — <span class="hi-fb">43% on Facebook</span> and <span class="hi-ig">37% on Instagram</span>. Creative targeting towards female demographics (especially 18-28) should be prioritized for maximum ROI.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- TOOLS & METHODOLOGY -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Technical Stack</div>
+    <h2 class="sec-title reveal">Tools & Methodology</h2>
+    <div class="two-col">
+      <div class="card reveal">
+        <div class="card-title ct-meta">🛠️ Tools Used</div>
+        <div class="tools-row">
+          <div class="tc">📊 Power BI</div>
+          <div class="tc">🔢 DAX</div>
+          <div class="tc">🐍 Python</div>
+          <div class="tc">🐼 Pandas</div>
+          <div class="tc">🗄️ SQL</div>
+          <div class="tc">📋 Excel</div>
+          <div class="tc">🗺️ Bing Maps</div>
+          <div class="tc">📅 Calendar Heatmap</div>
+          <div class="tc">📈 CTR Analysis</div>
+          <div class="tc">🔍 Funnel Analytics</div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <div class="card-title ct-meta">📋 Project Approach</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div><div class="step-title">Data Collection</div><div class="step-desc">Extracted ad performance data from Meta Ads Manager for both Facebook and Instagram campaigns</div></div></div>
+          <div class="step"><div class="step-num">2</div><div><div class="step-title">Metric Engineering</div><div class="step-desc">Calculated CTR, ER, CR and Purchase Rate using DAX; built weekly and hourly trend aggregations</div></div></div>
+          <div class="step"><div class="step-num">3</div><div><div class="step-title">Demographic Segmentation</div><div class="step-desc">Segmented engagements by gender, target age bracket and geographic country for audience profiling</div></div></div>
+          <div class="step"><div class="step-num">4</div><div><div class="step-title">Ad Type Analysis</div><div class="step-desc">Built cross-tab analysis for Carousel, Image, Stories and Video across all 6 performance metrics</div></div></div>
+          <div class="step"><div class="step-num">5</div><div><div class="step-title">Dual-Platform Dashboard</div><div class="step-desc">Designed two interactive dashboards with platform toggle (Facebook / Instagram), calendar month filter and campaign/interest slicers</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- OTHER PROJECTS -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">More Work</div>
+    <h2 class="sec-title reveal">Other Projects</h2>
+    <div class="next-grid reveal">
+      <a href="healthcare_project.html" class="next-card">
+        <div class="nc-ico">🏥</div><div class="nc-title">Healthcare Analytics</div>
+        <div class="nc-sub">6,597 members · 63% screening coverage</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="hotel_project.html" class="next-card">
+        <div class="nc-ico">🏨</div><div class="nc-title">Hotel Management</div>
+        <div class="nc-sub">$26M revenue · 75K occupied rooms</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="insurance_project.html" class="next-card">
+        <div class="nc-ico">🛡️</div><div class="nc-title">Insurance Risk & Claims</div>
+        <div class="nc-sub">37,542 policies · $187.8M claims</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="sales_project.html" class="next-card">
+        <div class="nc-ico">📈</div><div class="nc-title">Sales Overview</div>
+        <div class="nc-sub">$733.9K CY sales · 4 regions · YoY ▲20%</div>
+        <div class="nc-arr">View →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">Parth Bhalani.</div>
+  <div class="f-copy">© 2025 · Meta Ad Performance Case Study</div>
+  <a href="index.html" class="f-back">← Back to Portfolio</a>
+</footer>
+
+<script>
+  const c=document.getElementById('cur'),r=document.getElementById('cur2');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;c.style.left=mx+'px';c.style.top=my+'px';});
+  (function loop(){rx+=(mx-rx)*.13;ry+=(my-ry)*.13;r.style.left=rx+'px';r.style.top=ry+'px';requestAnimationFrame(loop);})();
+  document.querySelectorAll('a,button,.card,.ins-card,.next-card,.plat-block,.cntry,.kpi-row').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{r.style.width='44px';r.style.height='44px';});
+    el.addEventListener('mouseleave',()=>{r.style.width='30px';r.style.height='30px';});
+  });
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('on'),i*70);obs.unobserve(e.target);}});
+  },{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

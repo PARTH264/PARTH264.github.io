@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Churn Analysis (SQL) | Parth Bhalani</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #040d07;
+    --bg2:    #071209;
+    --bg3:    #09160b;
+    --accent: #34d399;
+    --a2:     #10b981;
+    --a3:     #6ee7b7;
+    --border: rgba(52,211,153,.1);
+    --bord2:  rgba(52,211,153,.22);
+    --text:   #e4f5ec;
+    --muted:  #3d6b4f;
+    --muted2: #2a4f38;
+    --surf:   rgba(52,211,153,.04);
+    /* SQL syntax colors */
+    --kw:  #569cd6;
+    --fn:  #dcdcaa;
+    --str: #ce9178;
+    --num: #b5cea8;
+    --cmt: #6a9955;
+    --tbl: #4ec9b0;
+    --op:  #d4d4d4;
+    --col: #9cdcfe;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none;}
+
+  #cur {width:8px;height:8px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+  #cur2{width:30px;height:30px;border:1.5px solid rgba(52,211,153,.35);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(52,211,153,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,.022) 1px,transparent 1px);
+    background-size:60px 60px;}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:100;padding:1rem 5rem;display:flex;justify-content:space-between;align-items:center;background:rgba(4,13,7,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);}
+  .nav-back{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--muted);font-size:.85rem;font-weight:500;transition:color .2s;}
+  .nav-back:hover{color:var(--accent);}
+  .nav-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);}
+  .nav-tag{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--border);border-radius:100px;color:var(--muted);}
+
+  /* HERO */
+  .hero{min-height:64vh;display:flex;align-items:center;padding:9rem 5rem 4rem;position:relative;overflow:hidden;}
+  .orb{position:absolute;border-radius:50%;pointer-events:none;}
+  .orb1{width:650px;height:650px;top:-160px;right:-140px;background:radial-gradient(circle,rgba(86,156,214,.07),transparent 65%);animation:drift 10s ease-in-out infinite;}
+  .orb2{width:450px;height:450px;bottom:-80px;left:-80px;background:radial-gradient(circle,rgba(52,211,153,.05),transparent 70%);animation:drift 14s ease-in-out infinite reverse;}
+  @keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(25px,-15px)}66%{transform:translate(-15px,12px)}}
+
+  .hero-content{position:relative;z-index:2;max-width:840px;}
+  .breadcrumb{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);margin-bottom:1.4rem;animation:fadeUp .6s ease both;}
+  .breadcrumb a{color:var(--accent);text-decoration:none;}
+  .badge-row{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1.3rem;animation:fadeUp .6s .07s ease both;}
+  .pb{font-size:.72rem;font-weight:600;letter-spacing:.06em;padding:.28rem .75rem;border-radius:100px;color:var(--accent);background:rgba(52,211,153,.07);border:1px solid var(--border);}
+  .pb-sql{color:#569cd6;background:rgba(86,156,214,.08);border-color:rgba(86,156,214,.25);}
+  .pb-bank{color:#fbbf24;background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2);}
+
+  .proj-title{font-family:'Outfit',sans-serif;font-size:clamp(2.2rem,5vw,4.2rem);font-weight:800;letter-spacing:-.04em;line-height:.95;animation:fadeUp .6s .13s ease both;}
+  .proj-title em{color:#569cd6;font-style:normal;}
+  .proj-sub{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.2rem;color:var(--muted);margin-top:.7rem;animation:fadeUp .6s .2s ease both;}
+
+  .hero-meta{display:flex;flex-wrap:wrap;gap:1.8rem;margin-top:2rem;padding:1.3rem 1.7rem;background:var(--surf);border:1px solid var(--border);border-radius:14px;animation:fadeUp .6s .26s ease both;width:fit-content;}
+  .m-lbl{font-size:.67rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);margin-bottom:.25rem;}
+  .m-val{font-size:.88rem;font-weight:600;color:var(--text);}
+  .m-val.blue{color:#569cd6;}
+  .m-val.gold{color:#fbbf24;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* LAYOUT */
+  .sec{position:relative;z-index:2;}
+  .inner{max-width:1200px;margin:0 auto;padding:5rem;}
+  .sec-div{position:relative;z-index:2;height:1px;background:linear-gradient(90deg,transparent,var(--bord2),transparent);}
+  .sec-label{display:inline-flex;align-items:center;gap:.7rem;font-size:.7rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:.7rem;}
+  .sec-label::before{content:'';width:26px;height:1px;background:var(--accent);}
+  .sec-title{font-family:'Outfit',sans-serif;font-size:clamp(1.7rem,3vw,2.3rem);font-weight:800;letter-spacing:-.03em;margin-bottom:2.5rem;}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal.on{opacity:1;transform:translateY(0);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:border-color .3s;}
+  .card:hover{border-color:var(--bord2);}
+  .card-title{font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:700;color:#569cd6;margin-bottom:1.2rem;padding-bottom:.65rem;border-bottom:1px solid var(--border);}
+
+  /* KPI cards */
+  .kpi4{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;}
+  .kpi-c{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;position:relative;overflow:hidden;transition:all .3s;}
+  .kpi-c:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .kpi-c::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;opacity:0;transition:opacity .3s;}
+  .kpi-c:hover::after{opacity:1;}
+  .kc1::after{background:linear-gradient(90deg,#569cd6,#9cdcfe);}
+  .kc2::after{background:linear-gradient(90deg,#fbbf24,#f97316);}
+  .kc3::after{background:linear-gradient(90deg,var(--a2),var(--accent));}
+  .kc4::after{background:linear-gradient(90deg,#c084fc,#818cf8);}
+  .kpi-ico{font-size:1.4rem;margin-bottom:.6rem;}
+  .kpi-lbl{font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.4rem;}
+  .kpi-num{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;line-height:1;}
+  .kpi-sub{font-size:.7rem;color:var(--muted);margin-top:.35rem;}
+
+  /* CODE BLOCK */
+  .code-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 8px 40px rgba(0,0,0,.5);}
+  .code-bar{background:#0a1a0d;padding:.6rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border);}
+  .cb-dot{width:10px;height:10px;border-radius:50%;}
+  .cb-fname{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);margin-left:.3rem;}
+  .cb-qnum{font-size:.68rem;font-weight:700;padding:.18rem .55rem;border-radius:100px;background:rgba(86,156,214,.12);color:#9cdcfe;border:1px solid rgba(86,156,214,.2);margin-left:auto;}
+  pre{background:#050e08;padding:1.3rem 1.5rem;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.9;}
+  .kw{color:var(--kw);font-weight:600;}
+  .fn{color:var(--fn);}
+  .str{color:var(--str);}
+  .num{color:var(--num);}
+  .cmt{color:var(--cmt);font-style:italic;}
+  .tbl{color:var(--tbl);}
+  .col{color:var(--col);}
+  .op{color:var(--op);}
+
+  /* OUTPUT TABLE */
+  .out-wrap{border-radius:10px;overflow:hidden;border:1px solid rgba(86,156,214,.15);}
+  .out-bar{background:#030e05;padding:.5rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(86,156,214,.1);}
+  .out-bar-title{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);}
+  .out-rows{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);padding:.3rem 1rem .5rem;}
+  .out-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.75rem;}
+  .out-table th{background:#030e05;padding:.5rem .8rem;text-align:left;color:#569cd6;font-weight:700;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(86,156,214,.15);}
+  .out-table td{padding:.5rem .8rem;border-bottom:1px solid rgba(52,211,153,.04);color:var(--text);}
+  .out-table tr:hover td{background:rgba(52,211,153,.025);}
+  .out-table tr:last-child td{border-bottom:none;}
+  .td-hi{color:var(--accent);font-weight:600;}
+  .td-warn{color:#f87171;font-weight:600;}
+  .td-gold{color:#fbbf24;font-weight:600;}
+  .td-blue{color:#9cdcfe;}
+  .badge-risk{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.66rem;font-weight:700;}
+  .risk-high{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+  .risk-mod{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2);}
+  .risk-low{background:rgba(52,211,153,.1);color:var(--accent);border:1px solid rgba(52,211,153,.2);}
+
+  /* PIPELINE STEPS */
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem;}
+  .pipe-step{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;transition:all .3s;position:relative;}
+  .pipe-step:hover{border-color:var(--bord2);transform:translateY(-3px);}
+  .pipe-step:not(:last-child)::after{content:'→';position:absolute;right:-.75rem;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:.9rem;z-index:1;}
+  .ps-num{width:26px;height:26px;border-radius:50%;background:rgba(86,156,214,.1);border:1px solid rgba(86,156,214,.3);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#9cdcfe;margin:0 auto .6rem;}
+  .ps-ico{font-size:1.3rem;margin-bottom:.4rem;}
+  .ps-title{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:.25rem;}
+  .ps-desc{font-size:.65rem;color:var(--muted);line-height:1.5;}
+
+  /* BAR CHART */
+  .bc-list{display:flex;flex-direction:column;gap:.65rem;}
+  .bc-row{display:flex;align-items:center;gap:.7rem;}
+  .bc-lbl{font-size:.76rem;color:var(--muted);text-align:right;flex-shrink:0;}
+  .bc-track{flex:1;height:22px;background:rgba(86,156,214,.05);border-radius:4px;overflow:hidden;}
+  .bc-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:.45rem;font-size:.7rem;font-weight:700;color:#fff;transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+  .bf-blue{background:linear-gradient(90deg,#1565c0,#569cd6);}
+  .bf-gold{background:linear-gradient(90deg,#b45309,#fbbf24);}
+  .bf-green{background:linear-gradient(90deg,var(--a2),var(--accent));}
+
+  /* SCHEMA */
+  .schema-table{width:100%;border-collapse:collapse;font-size:.78rem;font-family:'JetBrains Mono',monospace;}
+  .schema-table th{padding:.5rem .8rem;text-align:left;color:#569cd6;font-weight:700;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  .schema-table td{padding:.5rem .8rem;border-bottom:1px solid rgba(52,211,153,.04);color:var(--text);}
+  .schema-table tr:hover td{background:rgba(52,211,153,.025);}
+  .dt-pk{color:#fbbf24;font-weight:700;}
+  .dt-type{color:#4ec9b0;}
+  .dt-desc{color:var(--muted);font-size:.7rem;}
+
+  /* INSIGHTS */
+  .ins-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;}
+  .ins-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;transition:all .3s;}
+  .ins-card:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .ins-ico{font-size:1.5rem;margin-bottom:.7rem;}
+  .ins-title{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;color:#569cd6;margin-bottom:.4rem;}
+  .ins-text{font-size:.8rem;line-height:1.75;color:var(--muted);}
+  .hi{color:var(--a3);font-weight:600;}
+  .hi-gold{color:#fbbf24;font-weight:600;}
+  .hi-red{color:#f87171;font-weight:600;}
+  .hi-blue{color:#9cdcfe;font-weight:600;}
+
+  /* TOOLS */
+  .tools-row{display:flex;flex-wrap:wrap;gap:.65rem;}
+  .tc{display:flex;align-items:center;gap:.45rem;padding:.45rem 1rem;border-radius:100px;background:var(--surf);border:1px solid var(--border);font-size:.8rem;font-weight:500;color:var(--text);transition:all .2s;}
+  .tc:hover{border-color:var(--bord2);background:rgba(52,211,153,.08);}
+
+  /* NEXT */
+  .next-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+  .next-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-decoration:none;color:var(--text);transition:all .3s;display:flex;flex-direction:column;gap:.5rem;}
+  .next-card:hover{border-color:var(--bord2);transform:translateY(-4px);}
+  .nc-ico{font-size:1.6rem;}
+  .nc-title{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;}
+  .nc-sub{font-size:.74rem;color:var(--muted);}
+  .nc-arr{font-size:.8rem;color:var(--accent);margin-top:auto;}
+
+  footer{position:relative;z-index:2;border-top:1px solid var(--border);padding:1.6rem 5rem;display:flex;justify-content:space-between;align-items:center;background:var(--bg);}
+  .f-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:.95rem;color:var(--accent);}
+  .f-copy{font-size:.78rem;color:var(--muted2);}
+  .f-back{font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s;}
+  .f-back:hover{color:var(--accent);}
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem;}
+    .hero,.inner{padding-left:1.5rem;padding-right:1.5rem;}
+    .kpi4,.two-col,.pipeline,.ins-grid,.next-grid{grid-template-columns:1fr 1fr;}
+    .pipe-step::after{display:none;}
+    footer{flex-direction:column;gap:.8rem;padding:1.2rem;text-align:center;}
+  }
+</style>
+</head>
+<body>
+<div id="cur"></div><div id="cur2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-back">← Back to Portfolio</a>
+  <div class="nav-logo">Parth Bhalani</div>
+  <div class="nav-tag">SQL Case Study</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero sec">
+  <div class="orb orb1"></div><div class="orb orb2"></div>
+  <div class="hero-content">
+    <div class="breadcrumb reveal">
+      <a href="index.html">Portfolio</a> <span>/</span> <span>Bank Churn Analysis</span>
+    </div>
+    <div class="badge-row reveal">
+      <span class="pb pb-sql">🗄️ SQL / Database Analysis</span>
+      <span class="pb pb-bank">🏦 Banking / Finance</span>
+      <span class="pb">MS SQL Server</span>
+      <span class="pb">Risk Segmentation</span>
+      <span class="pb">Customer Analytics</span>
+      <span class="pb">KPI Queries</span>
+    </div>
+    <h1 class="proj-title">Bank Churn<br><em>Analysis (SQL)</em></h1>
+    <p class="proj-sub">10 deep-dive SQL queries uncovering credit risk, customer segments & churn signals in banking data</p>
+    <div class="hero-meta reveal">
+      <div><div class="m-lbl">Database</div><div class="m-val blue">Bank Churn DB</div></div>
+      <div><div class="m-lbl">Total Queries</div><div class="m-val blue">10</div></div>
+      <div><div class="m-lbl">Avg Credit Limit</div><div class="m-val gold">$8,631.95</div></div>
+      <div><div class="m-lbl">Avg Utilization</div><div class="m-val gold">0.27</div></div>
+      <div><div class="m-lbl">Avg Customer Age</div><div class="m-val">46 yrs</div></div>
+      <div><div class="m-lbl">Analysis Type</div><div class="m-val">KPI + Granular</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- PIPELINE -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Project Flow</div>
+    <h2 class="sec-title reveal">Analysis Pipeline</h2>
+    <div class="pipeline reveal">
+      <div class="pipe-step">
+        <div class="ps-num">1</div><div class="ps-ico">🗄️</div>
+        <div class="ps-title">Database Setup</div>
+        <div class="ps-desc">Created Bank Churn DB, imported bank_churn_data table with all customer fields</div>
+      </div>
+      <div class="pipe-step">
+        <div class="ps-num">2</div><div class="ps-ico">📊</div>
+        <div class="ps-title">KPI Queries</div>
+        <div class="ps-desc">Extracted total customers, avg age, avg credit limit and avg utilization ratio</div>
+      </div>
+      <div class="pipe-step">
+        <div class="ps-num">3</div><div class="ps-ico">🔍</div>
+        <div class="ps-title">Segmentation</div>
+        <div class="ps-desc">Segmented customers by card type, income, marital status and age group</div>
+      </div>
+      <div class="pipe-step">
+        <div class="ps-num">4</div><div class="ps-ico">⚠️</div>
+        <div class="ps-title">Risk Flagging</div>
+        <div class="ps-desc">Identified high-risk customers using utilization ratio thresholds and CASE logic</div>
+      </div>
+      <div class="pipe-step">
+        <div class="ps-num">5</div><div class="ps-ico">🏆</div>
+        <div class="ps-title">VIP Profiling</div>
+        <div class="ps-desc">Isolated top-tenure customers (months_on_book > 53) as VIP segment</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- DATABASE SCHEMA -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Database</div>
+    <h2 class="sec-title reveal">Table Schema — bank_churn_data</h2>
+    <div class="two-col">
+      <div class="card reveal">
+        <div class="card-title">📋 Column Definitions</div>
+        <table class="schema-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td class="dt-pk">clientnum</td><td class="dt-type">INT (PK)</td><td class="dt-desc">Unique customer identifier</td></tr>
+            <tr><td class="col">customer_age</td><td class="dt-type">INT</td><td class="dt-desc">Customer's age in years</td></tr>
+            <tr><td class="col">income</td><td class="dt-type">VARCHAR</td><td class="dt-desc">Income bracket (e.g. Less than $40K)</td></tr>
+            <tr><td class="col">marital_status</td><td class="dt-type">VARCHAR</td><td class="dt-desc">Married / Single / Divorced / Unknown</td></tr>
+            <tr><td class="col">card_category</td><td class="dt-type">VARCHAR</td><td class="dt-desc">Blue / Silver / Gold / Platinum</td></tr>
+            <tr><td class="col">credit_limit</td><td class="dt-type">FLOAT</td><td class="dt-desc">Customer's total credit limit ($)</td></tr>
+            <tr><td class="col">balance</td><td class="dt-type">FLOAT</td><td class="dt-desc">Current revolving balance ($)</td></tr>
+            <tr><td class="col">utilization_ratio</td><td class="dt-type">FLOAT</td><td class="dt-desc">Balance / Credit Limit (0.0–1.0)</td></tr>
+            <tr><td class="col">months_on_book</td><td class="dt-type">INT</td><td class="dt-desc">Months as active customer</td></tr>
+            <tr><td class="col">dependent_count</td><td class="dt-type">INT</td><td class="dt-desc">Number of financial dependents</td></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- KPI queries -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Core KPI Queries</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_kpi.sql</span>
+            <span class="cb-qnum">KPI Block</span>
+          </div>
+<pre><span class="cmt">-- Total Customers</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(<span class="col">clientnum</span>) <span class="kw">AS</span> <span class="col">Total_Customers</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>;
+
+<span class="cmt">-- Avg Utilization Ratio</span>
+<span class="kw">SELECT</span> <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="col">utilization_ratio</span>), <span class="num">2</span>) <span class="kw">AS</span> <span class="col">Avg_Utilization</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>;
+
+<span class="cmt">-- Average Credit Limit</span>
+<span class="kw">SELECT</span> <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="col">credit_limit</span>),<span class="num">2</span>) <span class="kw">AS</span> <span class="col">Avg_Credit_Limit</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>;
+
+<span class="cmt">-- Average Age</span>
+<span class="kw">SELECT</span> <span class="fn">AVG</span>(<span class="col">customer_age</span>) <span class="kw">AS</span> <span class="col">Avg_Age</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>;</pre>
+        </div>
+
+        <div style="margin-top:.9rem;">
+          <div class="out-wrap">
+            <div class="out-bar">
+              <div class="cb-dot" style="background:#28c840"></div>
+              <span class="out-bar-title">Query Results — KPI Summary</span>
+            </div>
+            <table class="out-table">
+              <thead><tr><th>Total_Customers</th><th>Avg_Utilization</th><th>Avg_Credit_Limit</th><th>Avg_Age</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="td-hi">10,127</td>
+                  <td class="td-gold">0.27</td>
+                  <td class="td-gold">$8,631.95</td>
+                  <td class="td-blue">46</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="out-rows">(1 row affected per query)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- QUERIES 1–4: Segmentation -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Queries 1–4</div>
+    <h2 class="sec-title reveal">Customer Segmentation Analysis</h2>
+    <div class="two-col">
+
+      <!-- Q1 Card Category -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 1 — Card Category Distribution</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q1</span>
+          </div>
+<pre><span class="kw">SELECT</span> <span class="col">card_category</span>,
+       <span class="fn">COUNT</span>(<span class="col">clientnum</span>) <span class="kw">AS</span> <span class="col">Customer_Count</span>
+<span class="kw">FROM</span>  <span class="tbl">bank_churn_data</span>
+<span class="kw">GROUP BY</span> <span class="col">card_category</span>
+<span class="kw">ORDER BY</span> <span class="col">Customer_Count</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — 4 rows</span></div>
+          <table class="out-table">
+            <thead><tr><th>card_category</th><th>Customer_Count</th></tr></thead>
+            <tbody>
+              <tr><td class="td-blue">Blue</td><td class="td-hi">9,436</td></tr>
+              <tr><td class="td-blue">Silver</td><td>555</td></tr>
+              <tr><td class="td-blue">Gold</td><td>116</td></tr>
+              <tr><td class="td-blue">Platinum</td><td class="td-warn">20</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- mini bar -->
+        <div style="margin-top:.8rem;" class="card" style="padding:1rem;">
+          <div class="bc-list" style="margin-top:.3rem;">
+            <div class="bc-row"><span class="bc-lbl" style="width:60px;">Blue</span><div class="bc-track"><div class="bc-fill bf-blue" data-w="100" style="width:0">9,436</div></div></div>
+            <div class="bc-row"><span class="bc-lbl" style="width:60px;">Silver</span><div class="bc-track"><div class="bc-fill bf-blue" data-w="5.9" style="width:0">555</div></div></div>
+            <div class="bc-row"><span class="bc-lbl" style="width:60px;">Gold</span><div class="bc-track"><div class="bc-fill bf-blue" data-w="1.2" style="width:0">116</div></div></div>
+            <div class="bc-row"><span class="bc-lbl" style="width:60px;">Platinum</span><div class="bc-track"><div class="bc-fill bf-blue" data-w="0.2" style="width:0">20</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q3 Marital Status -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 3 — Customers by Marital Status</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q3</span>
+          </div>
+<pre><span class="kw">SELECT</span> <span class="col">marital_status</span>,
+       <span class="fn">COUNT</span>(<span class="col">clientnum</span>) <span class="kw">AS</span> <span class="col">Customer_Count</span>
+<span class="kw">FROM</span>  <span class="tbl">bank_churn_data</span>
+<span class="kw">GROUP BY</span> <span class="col">marital_status</span>
+<span class="kw">ORDER BY</span> <span class="col">Customer_Count</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — 4 rows</span></div>
+          <table class="out-table">
+            <thead><tr><th>marital_status</th><th>Customer_Count</th></tr></thead>
+            <tbody>
+              <tr><td class="td-blue">Married</td><td class="td-hi">4,687</td></tr>
+              <tr><td class="td-blue">Single</td><td>3,943</td></tr>
+              <tr><td class="td-blue">Unknown</td><td>749</td></tr>
+              <tr><td class="td-blue">Divorced</td><td class="td-warn">748</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:.8rem;" class="card">
+          <div class="bc-list" style="margin-top:.3rem;">
+            <div class="bc-row"><span class="bc-lbl" style="width:70px;">Married</span><div class="bc-track"><div class="bc-fill bf-green" data-w="100" style="width:0">4,687</div></div></div>
+            <div class="bc-row"><span class="bc-lbl" style="width:70px;">Single</span><div class="bc-track"><div class="bc-fill bf-green" data-w="84.1" style="width:0">3,943</div></div></div>
+            <div class="bc-row"><span class="bc-lbl" style="width:70px;">Unknown</span><div class="bc-track"><div class="bc-fill bf-green" data-w="16.0" style="width:0">749</div></div></div>
+            <div class="bc-row"><span class="bc-lbl" style="width:70px;">Divorced</span><div class="bc-track"><div class="bc-fill bf-green" data-w="15.9" style="width:0">748</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q4 Age Group -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 4 — Customer Segmentation by Age Group</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q4</span>
+          </div>
+<pre><span class="kw">SELECT</span>
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> <span class="col">customer_age</span> <span class="kw">BETWEEN</span> <span class="num">18</span> <span class="kw">AND</span> <span class="num">25</span> <span class="kw">THEN</span> <span class="str">'18-25'</span>
+    <span class="kw">WHEN</span> <span class="col">customer_age</span> <span class="kw">BETWEEN</span> <span class="num">26</span> <span class="kw">AND</span> <span class="num">35</span> <span class="kw">THEN</span> <span class="str">'26-35'</span>
+    <span class="kw">WHEN</span> <span class="col">customer_age</span> <span class="kw">BETWEEN</span> <span class="num">36</span> <span class="kw">AND</span> <span class="num">45</span> <span class="kw">THEN</span> <span class="str">'36-45'</span>
+    <span class="kw">WHEN</span> <span class="col">customer_age</span> <span class="kw">BETWEEN</span> <span class="num">46</span> <span class="kw">AND</span> <span class="num">55</span> <span class="kw">THEN</span> <span class="str">'46-55'</span>
+    <span class="kw">ELSE</span> <span class="str">'56+'</span>
+  <span class="kw">END</span> <span class="kw">AS</span> <span class="col">Age_Group</span>,
+  <span class="fn">COUNT</span>(<span class="col">clientnum</span>) <span class="kw">AS</span> <span class="col">Total_Customers</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">GROUP BY</span> <span class="kw">CASE</span> <span class="op">...</span> <span class="kw">END</span>
+<span class="kw">ORDER BY</span> <span class="col">Total_Customers</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — 5 rows</span></div>
+          <table class="out-table">
+            <thead><tr><th>Age_Group</th><th>Total_Customers</th></tr></thead>
+            <tbody>
+              <tr><td class="td-gold">46-55</td><td class="td-hi">3,762</td></tr>
+              <tr><td class="td-gold">36-45</td><td>3,086</td></tr>
+              <tr><td class="td-gold">56+</td><td>2,098</td></tr>
+              <tr><td class="td-gold">26-35</td><td>898</td></tr>
+              <tr><td class="td-gold">18-25</td><td class="td-warn">283</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Q2 Avg Balance by Income -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 2 — Avg Balance by Income Level</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q2</span>
+          </div>
+<pre><span class="kw">SELECT</span> <span class="col">income</span>,
+       <span class="fn">AVG</span>(<span class="col">balance</span>) <span class="kw">AS</span> <span class="col">Avg_Balance</span>
+<span class="kw">FROM</span>  <span class="tbl">bank_churn_data</span>
+<span class="kw">GROUP BY</span> <span class="col">income</span>
+<span class="kw">ORDER BY</span> <span class="col">Avg_Balance</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — 6 rows</span></div>
+          <table class="out-table">
+            <thead><tr><th>income</th><th>Avg_Balance</th></tr></thead>
+            <tbody>
+              <tr><td class="td-blue">$120K +</td><td class="td-hi">$1,621.38</td></tr>
+              <tr><td class="td-blue">$80K - $120K</td><td>$1,530.24</td></tr>
+              <tr><td class="td-blue">$60K - $80K</td><td>$1,472.10</td></tr>
+              <tr><td class="td-blue">$40K - $60K</td><td>$1,389.55</td></tr>
+              <tr><td class="td-blue">Less than $40K</td><td>$1,287.43</td></tr>
+              <tr><td class="td-blue">Unknown</td><td class="td-warn">$1,198.70</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- QUERIES 5, 6, 7 — Advanced -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Queries 5–7</div>
+    <h2 class="sec-title reveal">Credit Behavior & Tenure Analysis</h2>
+    <div class="two-col">
+
+      <!-- Q5 Top 10 High Utilization -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 5 — Top 10 Highest Utilization Customers</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q5</span>
+          </div>
+<pre><span class="kw">SELECT TOP</span> <span class="num">10</span>
+    <span class="col">clientnum</span>, <span class="col">customer_age</span>,
+    <span class="col">income</span>, <span class="col">credit_limit</span>,
+    <span class="col">utilization_ratio</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">ORDER BY</span> <span class="col">utilization_ratio</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — Top 10 rows</span></div>
+          <table class="out-table">
+            <thead><tr><th>clientnum</th><th>age</th><th>income</th><th>credit_limit</th><th>util_ratio</th></tr></thead>
+            <tbody>
+              <tr><td class="td-blue">768805383</td><td>45</td><td>Less than $40K</td><td class="td-warn">$1,438</td><td class="td-warn">0.999</td></tr>
+              <tr><td class="td-blue">818770008</td><td>50</td><td>Less than $40K</td><td class="td-warn">$1,438</td><td class="td-warn">0.999</td></tr>
+              <tr><td class="td-blue">710638233</td><td>42</td><td>$40K - $60K</td><td>$2,310</td><td class="td-warn">0.998</td></tr>
+              <tr><td class="td-blue">719661973</td><td>38</td><td>Less than $40K</td><td class="td-warn">$1,438</td><td class="td-warn">0.997</td></tr>
+              <tr><td class="td-blue">708082083</td><td>55</td><td>$40K - $60K</td><td>$3,095</td><td>0.994</td></tr>
+            </tbody>
+          </table>
+          <div class="out-rows">Showing top 5 of 10 — all have utilization_ratio > 0.99</div>
+        </div>
+      </div>
+
+      <!-- Q7 Longest Relationship -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 7 — Top 10 by Tenure (Longest Relationship)</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q7</span>
+          </div>
+<pre><span class="kw">SELECT TOP</span> <span class="num">10</span>
+    <span class="col">clientnum</span>, <span class="col">customer_age</span>,
+    <span class="col">months_on_book</span>, <span class="col">income</span>,
+    <span class="col">balance</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">ORDER BY</span> <span class="col">months_on_book</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — Top 5 of 10</span></div>
+          <table class="out-table">
+            <thead><tr><th>clientnum</th><th>age</th><th>months_on_book</th><th>income</th><th>balance</th></tr></thead>
+            <tbody>
+              <tr><td class="td-blue">713061558</td><td>52</td><td class="td-hi">56</td><td>$80K-$120K</td><td class="td-gold">$2,517</td></tr>
+              <tr><td class="td-blue">716771536</td><td>47</td><td class="td-hi">56</td><td>$40K-$60K</td><td>$1,961</td></tr>
+              <tr><td class="td-blue">717406983</td><td>61</td><td class="td-hi">56</td><td>$60K-$80K</td><td>$1,809</td></tr>
+              <tr><td class="td-blue">718712983</td><td>58</td><td class="td-hi">55</td><td>Less than $40K</td><td>$1,254</td></tr>
+              <tr><td class="td-blue">714432483</td><td>44</td><td class="td-hi">55</td><td>$80K-$120K</td><td class="td-gold">$2,218</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Q6 Low Balance / High Credit -->
+      <div class="reveal" style="grid-column:1/-1;">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 6 — High Credit Limit but Low Balance (Balance &lt; 20% of Limit)</div>
+        <div class="two-col">
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="cb-dot" style="background:#ff5f57"></div>
+              <div class="cb-dot" style="background:#febc2e"></div>
+              <div class="cb-dot" style="background:#28c840"></div>
+              <span class="cb-fname">bank_churn_analysis.sql</span>
+              <span class="cb-qnum">Q6</span>
+            </div>
+<pre><span class="kw">SELECT TOP</span> <span class="num">10</span>
+  <span class="col">clientnum</span>, <span class="col">customer_age</span>,
+  <span class="col">income</span>, <span class="col">credit_limit</span>,
+  <span class="col">balance</span>,
+  <span class="fn">ROUND</span>((<span class="col">balance</span> <span class="op">*</span> <span class="num">100.0</span> <span class="op">/</span> <span class="col">credit_limit</span>), <span class="num">2</span>)
+      <span class="kw">AS</span> <span class="col">Balance_Percentage</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">WHERE</span> <span class="col">balance</span> <span class="op">&lt;</span> (<span class="num">0.2</span> <span class="op">*</span> <span class="col">credit_limit</span>)
+<span class="kw">ORDER BY</span> <span class="col">Balance_Percentage</span> <span class="kw">ASC</span>;</pre>
+          </div>
+          <div class="out-wrap" style="align-self:start;">
+            <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — Churn Risk Candidates</span></div>
+            <table class="out-table">
+              <thead><tr><th>clientnum</th><th>age</th><th>credit_limit</th><th>balance</th><th>Bal_%</th></tr></thead>
+              <tbody>
+                <tr><td class="td-blue">768805383</td><td>45</td><td class="td-hi">$34,516</td><td class="td-warn">$0</td><td class="td-warn">0.00%</td></tr>
+                <tr><td class="td-blue">818770008</td><td>50</td><td class="td-hi">$29,622</td><td class="td-warn">$0</td><td class="td-warn">0.00%</td></tr>
+                <tr><td class="td-blue">710638233</td><td>42</td><td class="td-hi">$25,110</td><td>$149</td><td>0.59%</td></tr>
+                <tr><td class="td-blue">719661973</td><td>38</td><td class="td-hi">$22,800</td><td>$183</td><td>0.80%</td></tr>
+                <tr><td class="td-blue">708082083</td><td>55</td><td class="td-hi">$19,200</td><td>$210</td><td>1.09%</td></tr>
+              </tbody>
+            </table>
+            <div class="out-rows">⚠️ $0 balance on high-limit cards = strong churn signal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- QUERIES 8, 9, 10 — Risk + VIP -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Queries 8–10</div>
+    <h2 class="sec-title reveal">Risk Flagging & VIP Segmentation</h2>
+    <div class="two-col">
+
+      <!-- Q9 Risk Classification -->
+      <div class="reveal">
+        <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 9 — Credit Utilization Risk Classification</div>
+        <div class="code-wrap">
+          <div class="code-bar">
+            <div class="cb-dot" style="background:#ff5f57"></div>
+            <div class="cb-dot" style="background:#febc2e"></div>
+            <div class="cb-dot" style="background:#28c840"></div>
+            <span class="cb-fname">bank_churn_analysis.sql</span>
+            <span class="cb-qnum">Q9</span>
+          </div>
+<pre><span class="kw">SELECT</span>
+  <span class="col">clientnum</span>, <span class="col">customer_age</span>,
+  <span class="col">income</span>, <span class="col">credit_limit</span>,
+  <span class="col">utilization_ratio</span>,
+  <span class="fn">ROUND</span>((<span class="col">utilization_ratio</span> <span class="op">*</span> <span class="num">100.0</span>), <span class="num">2</span>)
+      <span class="kw">AS</span> <span class="col">Utilization_Percentage</span>,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> <span class="col">utilization_ratio</span> <span class="op">&gt;</span> <span class="num">0.8</span>
+        <span class="kw">THEN</span> <span class="str">'High Risk'</span>
+    <span class="kw">WHEN</span> <span class="col">utilization_ratio</span>
+        <span class="kw">BETWEEN</span> <span class="num">0.5</span> <span class="kw">AND</span> <span class="num">0.8</span>
+        <span class="kw">THEN</span> <span class="str">'Moderate Risk'</span>
+    <span class="kw">ELSE</span> <span class="str">'Low Risk'</span>
+  <span class="kw">END</span> <span class="kw">AS</span> <span class="col">Risk_Level</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">ORDER BY</span> <span class="col">utilization_ratio</span> <span class="kw">DESC</span>;</pre>
+        </div>
+        <div style="margin-top:.7rem;" class="out-wrap">
+          <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Sample Output — Risk Tiers</span></div>
+          <table class="out-table">
+            <thead><tr><th>clientnum</th><th>util_ratio</th><th>util_%</th><th>Risk_Level</th></tr></thead>
+            <tbody>
+              <tr><td class="td-blue">768805383</td><td>0.999</td><td>99.90%</td><td><span class="badge-risk risk-high">High Risk</span></td></tr>
+              <tr><td class="td-blue">818770008</td><td>0.999</td><td>99.90%</td><td><span class="badge-risk risk-high">High Risk</span></td></tr>
+              <tr><td class="td-blue">710638233</td><td>0.742</td><td>74.20%</td><td><span class="badge-risk risk-mod">Moderate Risk</span></td></tr>
+              <tr><td class="td-blue">719661973</td><td>0.512</td><td>51.20%</td><td><span class="badge-risk risk-mod">Moderate Risk</span></td></tr>
+              <tr><td class="td-blue">708082083</td><td>0.243</td><td>24.30%</td><td><span class="badge-risk risk-low">Low Risk</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Q8 + Q10 stacked -->
+      <div style="display:flex;flex-direction:column;gap:1.2rem;">
+        <!-- Q8 Dependents -->
+        <div class="reveal">
+          <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 8 — Avg Dependents by Income Group</div>
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="cb-dot" style="background:#ff5f57"></div>
+              <div class="cb-dot" style="background:#febc2e"></div>
+              <div class="cb-dot" style="background:#28c840"></div>
+              <span class="cb-fname">bank_churn_analysis.sql</span>
+              <span class="cb-qnum">Q8</span>
+            </div>
+<pre><span class="kw">SELECT</span>
+  <span class="col">income</span>,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="col">dependent_count</span>), <span class="num">2</span>)
+      <span class="kw">AS</span> <span class="col">Avg_Dependents</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">GROUP BY</span> <span class="col">income</span>
+<span class="kw">ORDER BY</span> <span class="col">Avg_Dependents</span> <span class="kw">DESC</span>;</pre>
+          </div>
+          <div style="margin-top:.6rem;" class="out-wrap">
+            <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Result — 6 rows</span></div>
+            <table class="out-table">
+              <thead><tr><th>income</th><th>Avg_Dependents</th></tr></thead>
+              <tbody>
+                <tr><td class="td-blue">Less than $40K</td><td class="td-warn">2.42</td></tr>
+                <tr><td class="td-blue">$40K - $60K</td><td>2.38</td></tr>
+                <tr><td class="td-blue">$60K - $80K</td><td>2.29</td></tr>
+                <tr><td class="td-blue">$80K - $120K</td><td>2.21</td></tr>
+                <tr><td class="td-blue">$120K +</td><td class="td-hi">2.08</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Q10 VIP -->
+        <div class="reveal">
+          <div style="font-size:.73rem;color:#9cdcfe;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.55rem;">Query 10 — VIP Segmentation (Tenure > 53 months)</div>
+          <div class="code-wrap">
+            <div class="code-bar">
+              <div class="cb-dot" style="background:#ff5f57"></div>
+              <div class="cb-dot" style="background:#febc2e"></div>
+              <div class="cb-dot" style="background:#28c840"></div>
+              <span class="cb-fname">bank_churn_analysis.sql</span>
+              <span class="cb-qnum">Q10</span>
+            </div>
+<pre><span class="kw">SELECT</span>
+  <span class="col">clientnum</span>, <span class="col">customer_age</span>,
+  <span class="col">months_on_book</span>, <span class="col">income</span>,
+  <span class="col">balance</span>, <span class="col">credit_limit</span>
+<span class="kw">FROM</span> <span class="tbl">bank_churn_data</span>
+<span class="kw">WHERE</span> <span class="col">months_on_book</span> <span class="op">&gt;</span> <span class="num">53</span>
+<span class="kw">ORDER BY</span> <span class="col">balance</span> <span class="kw">DESC</span>;</pre>
+          </div>
+          <div style="margin-top:.6rem;" class="out-wrap">
+            <div class="out-bar"><div class="cb-dot" style="background:#28c840"></div><span class="out-bar-title">Sample — VIP Customers</span></div>
+            <table class="out-table">
+              <thead><tr><th>clientnum</th><th>age</th><th>months</th><th>balance</th><th>credit_limit</th></tr></thead>
+              <tbody>
+                <tr><td class="td-blue">713061558</td><td>52</td><td class="td-hi">56</td><td class="td-gold">$2,517</td><td class="td-hi">$18,641</td></tr>
+                <tr><td class="td-blue">716771536</td><td>47</td><td class="td-hi">56</td><td class="td-gold">$1,961</td><td>$11,200</td></tr>
+                <tr><td class="td-blue">717406983</td><td>61</td><td class="td-hi">56</td><td class="td-gold">$1,809</td><td>$9,400</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- KEY INSIGHTS -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">Findings</div>
+    <h2 class="sec-title reveal">Key Insights from SQL Analysis</h2>
+    <div class="ins-grid">
+      <div class="ins-card reveal">
+        <div class="ins-ico">💳</div>
+        <div class="ins-title">Blue Cards Dominate at 93.2%</div>
+        <div class="ins-text">Of 10,127 customers, <span class="hi-blue">9,436 (93.2%) hold Blue cards</span>. Only 555 Silver, 116 Gold and 20 Platinum. This extreme concentration in the lowest tier signals an opportunity to upsell mid-tier Silver/Gold cards to eligible customers.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">⚠️</div>
+        <div class="ins-title">Near-100% Utilization = High Churn Risk</div>
+        <div class="ins-text">Top utilization customers reach <span class="hi-red">0.999 utilization ratio (99.9%)</span> with credit limits as low as $1,438. These customers are maxed out — a classic churn precursor. Proactive credit limit review or hardship outreach is critical.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">🏦</div>
+        <div class="ins-title">$0 Balance on High-Limit Cards = Silent Churners</div>
+        <div class="ins-text">Query 6 revealed customers with credit limits above <span class="hi-gold">$29,000–$34,000 holding $0 balance</span>. These are disengaged, high-value customers actively not using the card — the most dangerous churn segment to retain.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">👨‍👩‍👧</div>
+        <div class="ins-title">Lower Income = More Dependents</div>
+        <div class="ins-text">Customers earning less than $40K have an average of <span class="hi">2.42 dependents</span> vs just 2.08 for $120K+ earners. Higher dependent burden correlates with lower income — informing responsible credit limit assignment and risk appetite.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">👑</div>
+        <div class="ins-title">VIP Segment: 4+ Year Tenure Customers</div>
+        <div class="ins-text">Customers with <span class="hi-gold">months_on_book > 53 (4.4+ years)</span> represent the most loyal segment. These VIPs carry healthy balances ($1,800–$2,500) and high credit limits. Dedicated retention programs for this cohort would maximise lifetime value.</div>
+      </div>
+      <div class="ins-card reveal">
+        <div class="ins-ico">📊</div>
+        <div class="ins-title">46-55 Age Group is the Core Customer Base</div>
+        <div class="ins-text">The 46-55 age band is the largest segment with <span class="hi-blue">3,762 customers (37.1%)</span>, followed by 36-45 at 3,086. The 18-25 segment has only 283 customers — an underserved demographic with growth potential for younger credit products.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- TOOLS -->
+<section class="sec" style="background:var(--bg2);">
+  <div class="inner">
+    <div class="sec-label reveal">Tech Stack</div>
+    <h2 class="sec-title reveal">Tools & Skills Demonstrated</h2>
+    <div class="two-col">
+      <div class="card reveal">
+        <div class="card-title">🛠️ Tools Used</div>
+        <div class="tools-row">
+          <div class="tc">🗄️ MS SQL Server</div>
+          <div class="tc">📝 T-SQL</div>
+          <div class="tc">📊 SSMS</div>
+          <div class="tc">🐍 Python</div>
+          <div class="tc">🐼 Pandas</div>
+          <div class="tc">📋 Excel</div>
+          <div class="tc">🔢 Aggregate Functions</div>
+          <div class="tc">🔀 CASE Statements</div>
+          <div class="tc">📑 GROUP BY / ORDER BY</div>
+          <div class="tc">🎯 TOP N Queries</div>
+          <div class="tc">📐 WHERE Filtering</div>
+          <div class="tc">⚙️ Subquery Logic</div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <div class="card-title">📋 SQL Techniques Showcased</div>
+        <div style="display:flex;flex-direction:column;gap:.65rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <span style="font-size:.78rem;color:var(--muted);">Aggregate Functions</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#4ec9b0;">COUNT, AVG, ROUND</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <span style="font-size:.78rem;color:var(--muted);">Conditional Logic</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#569cd6;">CASE WHEN THEN ELSE END</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <span style="font-size:.78rem;color:var(--muted);">Top N Results</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#569cd6;">SELECT TOP 10</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <span style="font-size:.78rem;color:var(--muted);">Range Filtering</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#569cd6;">BETWEEN · WHERE · &lt; · &gt;</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <span style="font-size:.78rem;color:var(--muted);">Derived Columns</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#dcdcaa;">balance * 100.0 / credit_limit</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <span style="font-size:.78rem;color:var(--muted);">Risk Classification</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#ce9178;">High / Moderate / Low Risk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-div"></div>
+
+<!-- OTHER PROJECTS -->
+<section class="sec">
+  <div class="inner">
+    <div class="sec-label reveal">More Work</div>
+    <h2 class="sec-title reveal">Other Projects</h2>
+    <div class="next-grid reveal">
+      <a href="meta_ads_project.html" class="next-card">
+        <div class="nc-ico">📱</div><div class="nc-title">Meta Ads</div>
+        <div class="nc-sub">Instagram vs Facebook</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="insurance_project.html" class="next-card">
+        <div class="nc-ico">🛡️</div><div class="nc-title">Insurance Risk & Claims</div>
+        <div class="nc-sub">37,542 policies · $187.8M claims</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="sales_project.html" class="next-card">
+        <div class="nc-ico">📈</div><div class="nc-title">Sales Overview</div>
+        <div class="nc-sub">$733.9K sales · 4 regions · YoY ▲20%</div>
+        <div class="nc-arr">View →</div>
+      </a>
+      <a href="bert_sentiment_project.html" class="next-card">
+        <div class="nc-ico">🤖</div><div class="nc-title">BERT Sentiment Analysis</div>
+        <div class="nc-sub">93.4% accuracy · IMDb 50K reviews</div>
+        <div class="nc-arr">View →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">Parth Bhalani.</div>
+  <div class="f-copy">© 2025 · Bank Churn Analysis (SQL) Case Study</div>
+  <a href="index.html" class="f-back">← Back to Portfolio</a>
+</footer>
+
+<script>
+  const c=document.getElementById('cur'),r=document.getElementById('cur2');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;c.style.left=mx+'px';c.style.top=my+'px';});
+  (function loop(){rx+=(mx-rx)*.13;ry+=(my-ry)*.13;r.style.left=rx+'px';r.style.top=ry+'px';requestAnimationFrame(loop);})();
+  document.querySelectorAll('a,button,.card,.ins-card,.next-card,.kpi-c,.pipe-step').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{r.style.width='44px';r.style.height='44px';});
+    el.addEventListener('mouseleave',()=>{r.style.width='30px';r.style.height='30px';});
+  });
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('on'),i*70);obs.unobserve(e.target);}});
+  },{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  /* animate bars */
+  const barObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.bc-fill[data-w]').forEach((b,i)=>{
+          setTimeout(()=>{b.style.transition='width 1.3s cubic-bezier(.4,0,.2,1)';b.style.width=b.dataset.w+'%';},i*80);
+        });
+        barObs.unobserve(e.target);
+      }
+    });
+  },{threshold:.15});
+  document.querySelectorAll('.bc-list').forEach(el=>barObs.observe(el));
+</script>
+</body>
+</html>
