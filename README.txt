@@ -4,7 +4,7 @@ Welcome to my personal portfolio website. This website showcases my projects, sk
 
 ## 🚀 Live Website
 
-👉 https://parthbhalani264.github.io
+👉 https://PARTH264.github.io
 
 ## 📌 About Me
 
@@ -108,3 +108,4 @@ If you like this project, feel free to **star the repository** and connect with 
 ---
 
 © 2025 Parth Bhalani
+
